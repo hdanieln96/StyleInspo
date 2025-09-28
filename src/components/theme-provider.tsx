@@ -115,6 +115,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     if (!theme) return
 
     const updatedTheme = { ...theme, ...updates }
+    console.log('Theme updated:', updatedTheme)
 
     try {
       const response = await fetch('/api/theme', {

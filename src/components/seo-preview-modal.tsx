@@ -72,7 +72,7 @@ export function SEOPreviewModal({ open, onOpenChange, look, onSave }: SEOPreview
       setCopiedField(field)
       toast.success('Copied to clipboard!')
       setTimeout(() => setCopiedField(null), 2000)
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy to clipboard')
     }
   }
@@ -102,7 +102,7 @@ export function SEOPreviewModal({ open, onOpenChange, look, onSave }: SEOPreview
       await onSave(updatedLook)
       toast.success('SEO content updated successfully!')
       onOpenChange(false)
-    } catch (error) {
+    } catch {
       console.error('Failed to update SEO:', error)
       toast.error('Failed to update SEO content')
     } finally {
