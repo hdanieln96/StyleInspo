@@ -1,0 +1,856 @@
+"use client"
+
+import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useDropzone } from 'react-dropzone'
+import { ArrowLeft, Palette, Type, Layout, Image as ImageIcon, RotateCcw, Save, Upload, X } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useTheme } from '@/components/theme-provider'
+
+export default function StyleSettings() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const { theme, updateTheme, resetTheme, isLoading } = useTheme()
+  const [activeTab, setActiveTab] = useState<'colors' | 'logo' | 'typography' | 'layout'>('colors')
+  const [isSaving, setIsSaving] = useState(false)
+  const [localColors, setLocalColors] = useState({
+    primary: "#ec4899",
+    secondary: "#9333ea",
+    accent: "#f59e0b",
+    background: "#fafafa",
+    backgroundSecondary: "#f5f5f5",
+    text: "#171717",
+    textMuted: "#737373",
+    button: "#ec4899",
+    buttonHover: "#be185d",
+    tagBackground: "#ec4899",
+    tagText: "#ffffff",
+    cardBackground: "#ffffff",
+    cardOverlay: "rgba(0, 0, 0, 0.6)",
+    headerBackground: "#ffffff",
+    headerBorder: "#e5e7eb"
+  })
+  const [localTypography, setLocalTypography] = useState({
+    fontFamily: "Geist Sans",
+    headingSize: "large",
+    bodySize: "medium",
+    fontWeight: "normal"
+  })
+  const [localLayout, setLocalLayout] = useState({
+    containerWidth: "normal",
+    spacing: "normal",
+    borderRadius: "medium"
+  })
+  const [localLogo, setLocalLogo] = useState({
+    url: null,
+    width: 120,
+    height: 40,
+    position: "center",
+    showWithTitle: true
+  })
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+
+  // Logo upload callback - must be defined before useDropzone
+  const onLogoDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (file) {
+      const preview = URL.createObjectURL(file)
+      setLogoFile(file)
+      setLogoPreview(preview)
+    }
+  }, [])
+
+  // Dropzone hook - must be called unconditionally
+  const { getRootProps: getLogoRootProps, getInputProps: getLogoInputProps, isDragActive: isLogoDragActive } = useDropzone({
+    onDrop: onLogoDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg']
+    },
+    maxFiles: 1
+  })
+
+  // Update local state when theme loads
+  useEffect(() => {
+    if (theme?.colors) {
+      setLocalColors(theme.colors)
+    }
+    if (theme?.typography) {
+      setLocalTypography(theme.typography)
+    }
+    if (theme?.layout) {
+      setLocalLayout(theme.layout)
+    }
+    if (theme?.logo) {
+      setLocalLogo(theme.logo)
+    }
+  }, [theme])
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-16 w-96 mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="lg:col-span-2">
+              <Skeleton className="h-96 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    router.push('/admin/login')
+    return null
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      await updateTheme({
+        colors: localColors,
+        typography: localTypography,
+        layout: localLayout,
+        logo: localLogo
+      })
+      // Show success feedback here
+    } catch (error) {
+      console.error('Error saving theme:', error)
+      // Show error feedback here
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleReset = async () => {
+    if (confirm('Are you sure you want to reset to default theme? This will undo all customizations.')) {
+      await resetTheme()
+    }
+  }
+
+  const handleLogoUpload = async (file: File) => {
+    setIsUploadingLogo(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload logo')
+      }
+
+      const { url: logoUrl } = await uploadResponse.json()
+      setLocalLogo(prev => ({ ...prev, url: logoUrl }))
+      setLogoFile(null)
+      setLogoPreview(null)
+    } catch (error) {
+      console.error('Logo upload failed:', error)
+      alert('Failed to upload logo. Please try again.')
+    } finally {
+      setIsUploadingLogo(false)
+    }
+  }
+
+
+  const handleLogoRemove = () => {
+    setLocalLogo(prev => ({ ...prev, url: null }))
+    setLogoFile(null)
+    setLogoPreview(null)
+  }
+
+  const tabs = [
+    { id: 'colors' as const, label: 'Colors', icon: Palette },
+    { id: 'logo' as const, label: 'Logo', icon: ImageIcon },
+    { id: 'typography' as const, label: 'Typography', icon: Type },
+    { id: 'layout' as const, label: 'Layout', icon: Layout }
+  ]
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/admin')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Style Settings</h1>
+              <p className="text-muted-foreground">Customize your fashion affiliate site appearance</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={isSaving}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset to Default
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Customization Options</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <nav className="space-y-1">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                          activeTab === tab.id
+                            ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                            : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    )
+                  })}
+                </nav>
+              </CardContent>
+            </Card>
+
+            {/* Preview Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Live Preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: localColors.cardBackground,
+                      borderColor: localColors.backgroundSecondary
+                    }}
+                  >
+                    <h3
+                      className="font-bold mb-2"
+                      style={{
+                        color: localColors.text,
+                        fontFamily: localTypography.fontFamily
+                      }}
+                    >
+                      Sample Fashion Look
+                    </h3>
+                    <p
+                      className="text-sm mb-3"
+                      style={{ color: localColors.textMuted }}
+                    >
+                      This is how your content will look
+                    </p>
+                    <div className="flex gap-2">
+                      <Badge
+                        style={{
+                          backgroundColor: localColors.tagBackground,
+                          color: localColors.tagText
+                        }}
+                      >
+                        summer
+                      </Badge>
+                      <Badge
+                        style={{
+                          backgroundColor: localColors.tagBackground,
+                          color: localColors.tagText
+                        }}
+                      >
+                        casual
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="mt-3"
+                      style={{
+                        backgroundColor: localColors.button,
+                        color: localColors.tagText
+                      }}
+                    >
+                      Shop This Look
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {(() => {
+                    const activeTabData = tabs.find(tab => tab.id === activeTab)
+                    if (activeTabData?.icon) {
+                      const Icon = activeTabData.icon
+                      return <Icon className="h-5 w-5" />
+                    }
+                    return null
+                  })()}
+                  {tabs.find(tab => tab.id === activeTab)?.label} Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeTab === 'colors' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Brand Colors */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Brand Colors</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="primary">Primary Color</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.primary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, primary: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.primary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, primary: e.target.value }))}
+                                placeholder="#ec4899"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="secondary">Secondary Color</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.secondary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, secondary: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.secondary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, secondary: e.target.value }))}
+                                placeholder="#9333ea"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="accent">Accent Color</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.accent}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, accent: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.accent}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, accent: e.target.value }))}
+                                placeholder="#f59e0b"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Background Colors */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Background Colors</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="background">Main Background</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.background}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.background}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
+                                placeholder="#fafafa"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="backgroundSecondary">Secondary Background</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.backgroundSecondary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, backgroundSecondary: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.backgroundSecondary}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, backgroundSecondary: e.target.value }))}
+                                placeholder="#f5f5f5"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="headerBackground">Header Background</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.headerBackground || "#ffffff"}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, headerBackground: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.headerBackground || "#ffffff"}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, headerBackground: e.target.value }))}
+                                placeholder="#ffffff"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="headerBorder">Header Border</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.headerBorder}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, headerBorder: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.headerBorder}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, headerBorder: e.target.value }))}
+                                placeholder="#e5e7eb"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Text Colors */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Text Colors</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="text">Primary Text</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.text}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.text}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
+                                placeholder="#171717"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="textMuted">Muted Text</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.textMuted}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, textMuted: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.textMuted}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, textMuted: e.target.value }))}
+                                placeholder="#737373"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Elements */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Interactive Elements</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="button">Button Color</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.button}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, button: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.button}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, button: e.target.value }))}
+                                placeholder="#ec4899"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="tagBackground">Tag Background</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={localColors.tagBackground}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, tagBackground: e.target.value }))}
+                                className="w-12 h-10 p-1 rounded border"
+                              />
+                              <Input
+                                type="text"
+                                value={localColors.tagBackground}
+                                onChange={(e) => setLocalColors(prev => ({ ...prev, tagBackground: e.target.value }))}
+                                placeholder="#ec4899"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'typography' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="fontFamily">Font Family</Label>
+                        <Select
+                          value={localTypography.fontFamily}
+                          onValueChange={(value) => setLocalTypography(prev => ({ ...prev, fontFamily: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Geist Sans">Geist Sans (Default)</SelectItem>
+                            <SelectItem value="Inter">Inter</SelectItem>
+                            <SelectItem value="Roboto">Roboto</SelectItem>
+                            <SelectItem value="Open Sans">Open Sans</SelectItem>
+                            <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                            <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="headingSize">Heading Size</Label>
+                        <Select
+                          value={localTypography.headingSize}
+                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, headingSize: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">Small</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="large">Large (Default)</SelectItem>
+                            <SelectItem value="xl">Extra Large</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="bodySize">Body Text Size</Label>
+                        <Select
+                          value={localTypography.bodySize}
+                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, bodySize: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">Small</SelectItem>
+                            <SelectItem value="medium">Medium (Default)</SelectItem>
+                            <SelectItem value="large">Large</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="fontWeight">Font Weight</Label>
+                        <Select
+                          value={localTypography.fontWeight}
+                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, fontWeight: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="light">Light</SelectItem>
+                            <SelectItem value="normal">Normal (Default)</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="bold">Bold</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'layout' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="containerWidth">Container Width</Label>
+                        <Select
+                          value={localLayout.containerWidth}
+                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, containerWidth: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="narrow">Narrow (768px)</SelectItem>
+                            <SelectItem value="normal">Normal (1024px)</SelectItem>
+                            <SelectItem value="wide">Wide (1280px)</SelectItem>
+                            <SelectItem value="full">Full Width</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="spacing">Spacing</Label>
+                        <Select
+                          value={localLayout.spacing}
+                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, spacing: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="tight">Tight</SelectItem>
+                            <SelectItem value="normal">Normal (Default)</SelectItem>
+                            <SelectItem value="relaxed">Relaxed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="borderRadius">Border Radius</Label>
+                        <Select
+                          value={localLayout.borderRadius}
+                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, borderRadius: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None (Sharp)</SelectItem>
+                            <SelectItem value="small">Small</SelectItem>
+                            <SelectItem value="medium">Medium (Default)</SelectItem>
+                            <SelectItem value="large">Large</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'logo' && (
+                  <div className="space-y-6">
+                    {/* Current Logo Display */}
+                    {localLogo.url && !logoPreview && (
+                      <div className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-medium">Current Logo</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleLogoRemove}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove
+                          </Button>
+                        </div>
+                        <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+                          <img
+                            src={localLogo.url}
+                            alt="Current logo"
+                            style={{
+                              width: `${localLogo.width}px`,
+                              height: `${localLogo.height}px`
+                            }}
+                            className="object-contain"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Logo Upload Area */}
+                    {logoPreview ? (
+                      <div className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-medium">Logo Preview</h3>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setLogoFile(null)
+                                setLogoPreview(null)
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => logoFile && handleLogoUpload(logoFile)}
+                              disabled={isUploadingLogo}
+                            >
+                              {isUploadingLogo ? 'Uploading...' : 'Save Logo'}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+                          <img
+                            src={logoPreview}
+                            alt="Logo preview"
+                            style={{
+                              width: `${localLogo.width}px`,
+                              height: `${localLogo.height}px`
+                            }}
+                            className="object-contain"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        {...getLogoRootProps()}
+                        className={`
+                          text-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                          ${isLogoDragActive
+                            ? 'border-primary bg-primary/5'
+                            : 'border-muted-foreground/25 hover:border-primary hover:bg-primary/5'
+                          }
+                        `}
+                      >
+                        <input {...getLogoInputProps()} />
+                        <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          {localLogo.url ? 'Replace Logo' : 'Upload Logo'}
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          {isLogoDragActive
+                            ? 'Drop the logo here...'
+                            : 'Drag & drop a logo, or click to select'
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, JPEG, WebP, SVG up to 5MB
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="logoWidth">Logo Width (px)</Label>
+                        <Input
+                          type="number"
+                          value={localLogo.width}
+                          onChange={(e) => setLocalLogo(prev => ({ ...prev, width: parseInt(e.target.value) || 120 }))}
+                          min="20"
+                          max="400"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="logoHeight">Logo Height (px)</Label>
+                        <Input
+                          type="number"
+                          value={localLogo.height}
+                          onChange={(e) => setLocalLogo(prev => ({ ...prev, height: parseInt(e.target.value) || 40 }))}
+                          min="20"
+                          max="200"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="logoPosition">Position</Label>
+                        <Select
+                          value={localLogo.position}
+                          onValueChange={(value: any) => setLocalLogo(prev => ({ ...prev, position: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="left">Left</SelectItem>
+                            <SelectItem value="center">Center</SelectItem>
+                            <SelectItem value="right">Right</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
