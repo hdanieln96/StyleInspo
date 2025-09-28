@@ -1,9 +1,13 @@
 import { neon } from '@neondatabase/serverless'
 
-// Database connection - try multiple possible environment variable names
-const databaseUrl = process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.NEON_DATABASE_URL
-console.log('Database URL status:', databaseUrl ? 'Found' : 'Missing')
-const sql = neon(databaseUrl!)
+// Database connection - use the Neon-created environment variable
+const databaseUrl = process.env.DATABASE_POSTGRES_URL || process.env.DATABASE_URL
+console.log('Database URL status:', databaseUrl ? 'Found DATABASE_POSTGRES_URL' : 'Missing both DATABASE_POSTGRES_URL and DATABASE_URL')
+if (!databaseUrl) {
+  console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('DATABASE')))
+  throw new Error('No database URL found in environment variables')
+}
+const sql = neon(databaseUrl)
 
 // Initialize database schema
 export async function initializeDatabase() {
