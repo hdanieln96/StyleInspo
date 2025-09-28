@@ -51,7 +51,7 @@ export default function AdminLogin() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
-            Access the Fashion Affiliate admin panel
+            Access the StyleInspo admin panel
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,12 +97,6 @@ export default function AdminLogin() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Demo credentials:</p>
-            <p className="text-xs font-mono">Email: admin@fashionaffiliate.com</p>
-            <p className="text-xs font-mono">Password: admin123</p>
-          </div>
         </CardContent>
       </Card>
     </div>
