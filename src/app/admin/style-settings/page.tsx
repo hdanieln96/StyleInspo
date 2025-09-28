@@ -597,7 +597,7 @@ export default function StyleSettings() {
                         <Label htmlFor="headingSize">Heading Size</Label>
                         <Select
                           value={localTypography.headingSize}
-                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, headingSize: value }))}
+                          onValueChange={(value: string) => setLocalTypography(prev => ({ ...prev, headingSize: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -615,7 +615,7 @@ export default function StyleSettings() {
                         <Label htmlFor="bodySize">Body Text Size</Label>
                         <Select
                           value={localTypography.bodySize}
-                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, bodySize: value }))}
+                          onValueChange={(value: string) => setLocalTypography(prev => ({ ...prev, bodySize: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -632,7 +632,7 @@ export default function StyleSettings() {
                         <Label htmlFor="fontWeight">Font Weight</Label>
                         <Select
                           value={localTypography.fontWeight}
-                          onValueChange={(value: any) => setLocalTypography(prev => ({ ...prev, fontWeight: value }))}
+                          onValueChange={(value: string) => setLocalTypography(prev => ({ ...prev, fontWeight: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -656,7 +656,7 @@ export default function StyleSettings() {
                         <Label htmlFor="containerWidth">Container Width</Label>
                         <Select
                           value={localLayout.containerWidth}
-                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, containerWidth: value }))}
+                          onValueChange={(value: string) => setLocalLayout(prev => ({ ...prev, containerWidth: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -674,7 +674,7 @@ export default function StyleSettings() {
                         <Label htmlFor="spacing">Spacing</Label>
                         <Select
                           value={localLayout.spacing}
-                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, spacing: value }))}
+                          onValueChange={(value: string) => setLocalLayout(prev => ({ ...prev, spacing: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -691,7 +691,7 @@ export default function StyleSettings() {
                         <Label htmlFor="borderRadius">Border Radius</Label>
                         <Select
                           value={localLayout.borderRadius}
-                          onValueChange={(value: any) => setLocalLayout(prev => ({ ...prev, borderRadius: value }))}
+                          onValueChange={(value: string) => setLocalLayout(prev => ({ ...prev, borderRadius: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -831,7 +831,7 @@ export default function StyleSettings() {
                         <Label htmlFor="logoPosition">Position</Label>
                         <Select
                           value={localLogo.position}
-                          onValueChange={(value: any) => setLocalLogo(prev => ({ ...prev, position: value }))}
+                          onValueChange={(value: string) => setLocalLogo(prev => ({ ...prev, position: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue />

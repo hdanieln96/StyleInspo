@@ -365,7 +365,7 @@ export function EditMainLookModal({ look, isOpen, onClose, onSave }: EditMainLoo
                   name="occasionGuide"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Occasion Guide - 'When to Wear' section on page (MEDIUM SEO impact)</FormLabel>
+                      <FormLabel>Occasion Guide - &apos;When to Wear&apos; section on page (MEDIUM SEO impact)</FormLabel>
                       <FormControl>
                         <Textarea {...field} placeholder="Example: 'Perfect for office meetings, business lunches, client presentations, and professional networking events. This versatile look transitions seamlessly from boardroom to happy hour.'\n\nHelps users understand when to wear the outfit and adds contextual content for SEO" rows={4} />
                       </FormControl>
