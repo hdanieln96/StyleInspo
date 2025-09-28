@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fashion Affiliate - Discover Amazing Fashion Looks",
-  description: "Discover stunning fashion looks and shop individual pieces through our curated affiliate partners",
+  title: "StyleInspo - AI Fashion Discovery & Shopping",
+  description: "Discover stunning AI-generated fashion looks and shop individual pieces through our curated affiliate partners",
 };
 
 export default function RootLayout({
