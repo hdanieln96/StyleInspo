@@ -143,7 +143,7 @@ export function Footer() {
                 className="text-sm"
                 style={{ color: 'var(--theme-text-muted)' }}
               >
-                © {currentYear} FashionAffiliate. All rights reserved.
+                © {currentYear} StyleInspo. All rights reserved.
               </p>
               <p
                 className="text-xs"
@@ -167,13 +167,11 @@ export function Footer() {
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={() => router.push('/admin/login')}
-                  className="flex items-center gap-2"
+                  className="bg-black hover:bg-gray-800 text-white p-2 rounded-md border-0"
                 >
-                  <User className="h-4 w-4" />
-                  Sign In
+                  <Settings className="h-4 w-4" />
                 </Button>
               )}
             </div>
