@@ -1,7 +1,9 @@
 import { neon } from '@neondatabase/serverless'
 
-// Database connection
-const sql = neon(process.env.DATABASE_URL!)
+// Database connection - try multiple possible environment variable names
+const databaseUrl = process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.NEON_DATABASE_URL
+console.log('Database URL status:', databaseUrl ? 'Found' : 'Missing')
+const sql = neon(databaseUrl!)
 
 // Initialize database schema
 export async function initializeDatabase() {
