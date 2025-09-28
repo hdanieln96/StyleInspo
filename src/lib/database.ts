@@ -6,6 +6,8 @@ const sql = neon(process.env.DATABASE_URL!)
 // Initialize database schema
 export async function initializeDatabase() {
   try {
+    console.log('Initializing database schema...')
+
     // Create fashion_looks table if it doesn't exist
     await sql`
       CREATE TABLE IF NOT EXISTS fashion_looks (
@@ -22,6 +24,7 @@ export async function initializeDatabase() {
         seo_last_updated TIMESTAMP WITH TIME ZONE
       )
     `
+    console.log('Table created/verified successfully')
 
     // Create indexes for better performance
     await sql`
@@ -39,11 +42,17 @@ export async function initializeDatabase() {
       ON fashion_looks(occasion)
       WHERE occasion IS NOT NULL
     `
+    console.log('Database indexes created/verified successfully')
+
+    // Test the connection by counting rows
+    const result = await sql`SELECT COUNT(*) as count FROM fashion_looks`
+    console.log('Database connection verified, current looks count:', result[0]?.count || 0)
 
     console.log('Database schema initialized successfully')
     return true
   } catch (error) {
     console.error('Database initialization error:', error)
+    console.error('Error details:', error)
     return false
   }
 }
@@ -51,13 +60,18 @@ export async function initializeDatabase() {
 // Get all fashion looks
 export async function getAllLooks() {
   try {
+    // Ensure table exists before querying
+    await initializeDatabase()
+
     const looks = await sql`
       SELECT * FROM fashion_looks
       ORDER BY created_at DESC
     `
+    console.log('Database query successful, found looks:', looks.length)
     return looks
   } catch (error) {
     console.error('Error fetching looks:', error)
+    console.error('Error details:', error)
     return []
   }
 }
