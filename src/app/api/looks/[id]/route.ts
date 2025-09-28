@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 import { FashionLook } from '@/types'
 import { extractPublicId, deleteImage } from '@/lib/cloudinary'
-
-const DATA_FILE = path.join(process.cwd(), 'src/data/looks.json')
+import { getLookById, updateLook } from '@/lib/database'
 
 // GET single look
 export async function GET(
@@ -13,17 +10,32 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const data = await fs.readFile(DATA_FILE, 'utf8')
-    const looks: FashionLook[] = JSON.parse(data)
-    const look = looks.find(l => l.id === id)
+    console.log('Fetching look from database:', id)
 
-    if (!look) {
+    const dbLook = await getLookById(id)
+
+    if (!dbLook) {
       return NextResponse.json({ error: 'Look not found' }, { status: 404 })
+    }
+
+    // Transform database format to frontend format
+    const look: FashionLook = {
+      id: dbLook.id,
+      title: dbLook.title,
+      mainImage: dbLook.main_image,
+      items: Array.isArray(dbLook.items) ? dbLook.items : [],
+      tags: Array.isArray(dbLook.tags) ? dbLook.tags : [],
+      createdAt: dbLook.created_at,
+      seo: dbLook.seo || undefined,
+      aiAnalysis: dbLook.ai_analysis || undefined,
+      occasion: dbLook.occasion || undefined,
+      season: dbLook.season || undefined,
+      seoLastUpdated: dbLook.seo_last_updated || undefined
     }
 
     return NextResponse.json(look)
   } catch (error) {
-    console.error('Error reading look:', error)
+    console.error('Error reading look from database:', error)
     return NextResponse.json({ error: 'Failed to read look' }, { status: 500 })
   }
 }
@@ -36,22 +48,35 @@ export async function PUT(
   try {
     const { id } = await params
     const updatedLook: FashionLook = await request.json()
+    console.log('Updating look in database:', id)
 
-    const data = await fs.readFile(DATA_FILE, 'utf8')
-    const looks: FashionLook[] = JSON.parse(data)
-
-    const index = looks.findIndex(l => l.id === id)
-    if (index === -1) {
+    // Check if look exists
+    const existingLook = await getLookById(id)
+    if (!existingLook) {
       return NextResponse.json({ error: 'Look not found' }, { status: 404 })
     }
 
-    looks[index] = updatedLook
+    // Update in database
+    const dbLook = await updateLook(id, updatedLook)
 
-    await fs.writeFile(DATA_FILE, JSON.stringify(looks, null, 2))
+    // Transform back to frontend format
+    const transformedLook: FashionLook = {
+      id: dbLook.id,
+      title: dbLook.title,
+      mainImage: dbLook.main_image,
+      items: Array.isArray(dbLook.items) ? dbLook.items : [],
+      tags: Array.isArray(dbLook.tags) ? dbLook.tags : [],
+      createdAt: dbLook.created_at,
+      seo: dbLook.seo || undefined,
+      aiAnalysis: dbLook.ai_analysis || undefined,
+      occasion: dbLook.occasion || undefined,
+      season: dbLook.season || undefined,
+      seoLastUpdated: dbLook.seo_last_updated || undefined
+    }
 
-    return NextResponse.json(updatedLook)
+    return NextResponse.json(transformedLook)
   } catch (error) {
-    console.error('Error updating look:', error)
+    console.error('Error updating look in database:', error)
     return NextResponse.json({ error: 'Failed to update look' }, { status: 500 })
   }
 }
@@ -63,12 +88,22 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const data = await fs.readFile(DATA_FILE, 'utf8')
-    const looks: FashionLook[] = JSON.parse(data)
+    console.log('Deleting look from database:', id)
 
-    const lookToDelete = looks.find(l => l.id === id)
-    if (!lookToDelete) {
+    // Get the look to delete from database
+    const dbLookToDelete = await getLookById(id)
+    if (!dbLookToDelete) {
       return NextResponse.json({ error: 'Look not found' }, { status: 404 })
+    }
+
+    // Transform to frontend format for image processing
+    const lookToDelete: FashionLook = {
+      id: dbLookToDelete.id,
+      title: dbLookToDelete.title,
+      mainImage: dbLookToDelete.main_image,
+      items: Array.isArray(dbLookToDelete.items) ? dbLookToDelete.items : [],
+      tags: Array.isArray(dbLookToDelete.tags) ? dbLookToDelete.tags : [],
+      createdAt: dbLookToDelete.created_at
     }
 
     // Collect all Cloudinary image URLs from the look
@@ -109,13 +144,14 @@ export async function DELETE(
     // Wait for all deletions to complete (but don't fail if some fail)
     await Promise.allSettled(deletionPromises)
 
-    // Remove from JSON data
-    const filteredLooks = looks.filter(l => l.id !== id)
-    await fs.writeFile(DATA_FILE, JSON.stringify(filteredLooks, null, 2))
+    // Remove from database
+    const { deleteLook } = await import('@/lib/database')
+    await deleteLook(id)
+    console.log('Look deleted from database:', id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting look:', error)
+    console.error('Error deleting look from database:', error)
     return NextResponse.json({ error: 'Failed to delete look' }, { status: 500 })
   }
 }
