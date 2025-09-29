@@ -37,18 +37,33 @@ export default function StyleSettings() {
     headerBackground: "#ffffff",
     headerBorder: "#e5e7eb"
   })
-  const [localTypography, setLocalTypography] = useState({
+  const [localTypography, setLocalTypography] = useState<{
+    fontFamily: string;
+    headingSize: 'small' | 'medium' | 'large' | 'xl';
+    bodySize: 'small' | 'medium' | 'large';
+    fontWeight: 'light' | 'normal' | 'medium' | 'bold';
+  }>({
     fontFamily: "Geist Sans",
     headingSize: "large",
     bodySize: "medium",
     fontWeight: "normal"
   })
-  const [localLayout, setLocalLayout] = useState({
+  const [localLayout, setLocalLayout] = useState<{
+    containerWidth: 'narrow' | 'normal' | 'wide' | 'full';
+    spacing: 'tight' | 'normal' | 'relaxed';
+    borderRadius: 'none' | 'small' | 'medium' | 'large';
+  }>({
     containerWidth: "normal",
     spacing: "normal",
     borderRadius: "medium"
   })
-  const [localLogo, setLocalLogo] = useState({
+  const [localLogo, setLocalLogo] = useState<{
+    url: string | null;
+    width: number;
+    height: number;
+    position: string;
+    showWithTitle: boolean;
+  }>({
     url: null,
     width: 120,
     height: 40,

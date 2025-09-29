@@ -3,14 +3,24 @@ import { neon } from '@neondatabase/serverless'
 // Database connection - use the Neon-created environment variable
 const databaseUrl = process.env.DATABASE_POSTGRES_URL || process.env.DATABASE_URL
 console.log('Database URL status:', databaseUrl ? 'Found DATABASE_POSTGRES_URL' : 'Missing both DATABASE_POSTGRES_URL and DATABASE_URL')
-if (!databaseUrl) {
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sql: any = null
+
+if (databaseUrl) {
+  sql = neon(databaseUrl)
+} else {
+  console.warn('Database not configured - environment variables missing')
   console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('DATABASE')))
-  throw new Error('No database URL found in environment variables')
 }
-const sql = neon(databaseUrl)
 
 // Initialize database schema
 export async function initializeDatabase() {
+  if (!sql) {
+    console.error('Cannot initialize database - no connection available')
+    return false
+  }
+
   try {
     console.log('Initializing database schema...')
 
@@ -30,7 +40,22 @@ export async function initializeDatabase() {
         seo_last_updated TIMESTAMP WITH TIME ZONE
       )
     `
-    console.log('Table created/verified successfully')
+
+    // Create themes table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS themes (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        logo JSONB NOT NULL DEFAULT '{}',
+        colors JSONB NOT NULL DEFAULT '{}',
+        typography JSONB NOT NULL DEFAULT '{}',
+        layout JSONB NOT NULL DEFAULT '{}',
+        is_active BOOLEAN DEFAULT false,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
+    console.log('Tables created/verified successfully')
 
     // Create indexes for better performance
     await sql`
@@ -65,6 +90,11 @@ export async function initializeDatabase() {
 
 // Get all fashion looks
 export async function getAllLooks() {
+  if (!sql) {
+    console.error('Cannot fetch looks - no database connection available')
+    return []
+  }
+
   try {
     // Ensure table exists before querying
     await initializeDatabase()
@@ -84,6 +114,11 @@ export async function getAllLooks() {
 
 // Get a single look by ID
 export async function getLookById(id: string) {
+  if (!sql) {
+    console.error('Cannot fetch look by ID - no database connection available')
+    return null
+  }
+
   try {
     const [look] = await sql`
       SELECT * FROM fashion_looks
@@ -97,6 +132,7 @@ export async function getLookById(id: string) {
 }
 
 // Create a new fashion look
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createLook(look: any) {
   try {
     const [newLook] = await sql`
@@ -125,6 +161,7 @@ export async function createLook(look: any) {
 }
 
 // Update a fashion look
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function updateLook(id: string, updates: any) {
   try {
     const [updatedLook] = await sql`
@@ -177,5 +214,120 @@ export async function searchLooks(query: string) {
   } catch (error) {
     console.error('Error searching looks:', error)
     return []
+  }
+}
+
+// Theme management functions
+
+// Get active theme
+export async function getActiveTheme() {
+  if (!sql) {
+    console.error('Cannot fetch theme - no database connection available')
+    return null
+  }
+
+  try {
+    const [theme] = await sql`
+      SELECT * FROM themes
+      WHERE is_active = true
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `
+    return theme || null
+  } catch (error) {
+    console.error('Error fetching active theme:', error)
+    return null
+  }
+}
+
+// Create or update theme
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function saveTheme(theme: any) {
+  try {
+    // First deactivate all existing themes
+    await sql`
+      UPDATE themes SET is_active = false
+    `
+
+    // Then create or update the new theme
+    const [savedTheme] = await sql`
+      INSERT INTO themes (
+        id, name, logo, colors, typography, layout, is_active, created_at, updated_at
+      ) VALUES (
+        ${theme.id},
+        ${theme.name},
+        ${JSON.stringify(theme.logo)},
+        ${JSON.stringify(theme.colors)},
+        ${JSON.stringify(theme.typography)},
+        ${JSON.stringify(theme.layout)},
+        true,
+        ${theme.createdAt || new Date().toISOString()},
+        ${new Date().toISOString()}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        logo = EXCLUDED.logo,
+        colors = EXCLUDED.colors,
+        typography = EXCLUDED.typography,
+        layout = EXCLUDED.layout,
+        is_active = EXCLUDED.is_active,
+        updated_at = EXCLUDED.updated_at
+      RETURNING *
+    `
+    return savedTheme
+  } catch (error) {
+    console.error('Error saving theme:', error)
+    throw error
+  }
+}
+
+// Reset to default theme
+export async function resetToDefaultTheme() {
+  try {
+    const defaultTheme = {
+      id: "default-theme",
+      name: "Default StyleInspo Theme",
+      logo: {
+        url: null,
+        width: 120,
+        height: 40,
+        position: "center",
+        showWithTitle: true
+      },
+      colors: {
+        primary: "#ec4899",
+        secondary: "#9333ea",
+        accent: "#f59e0b",
+        background: "#fafafa",
+        backgroundSecondary: "#f5f5f5",
+        text: "#171717",
+        textMuted: "#737373",
+        button: "#ec4899",
+        buttonHover: "#be185d",
+        tagBackground: "#ec4899",
+        tagText: "#ffffff",
+        cardBackground: "#ffffff",
+        cardOverlay: "rgba(0, 0, 0, 0.6)",
+        headerBackground: "#ffffff",
+        headerBorder: "#e5e7eb"
+      },
+      typography: {
+        fontFamily: "Geist Sans",
+        headingSize: "large",
+        bodySize: "medium",
+        fontWeight: "normal"
+      },
+      layout: {
+        containerWidth: "normal",
+        spacing: "normal",
+        borderRadius: "medium"
+      },
+      createdAt: new Date().toISOString()
+    }
+
+    return await saveTheme(defaultTheme)
+  } catch (error) {
+    console.error('Error resetting to default theme:', error)
+    throw error
   }
 }

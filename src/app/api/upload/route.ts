@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      url: (response as any).secure_url
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      url: (response as Record<string, any>).secure_url
     })
   } catch (error) {
     console.error('Upload error details:', error)

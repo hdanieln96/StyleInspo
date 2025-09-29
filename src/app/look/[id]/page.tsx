@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { FashionLook } from '@/types'
 import { LookDetailContent } from './LookDetailContent'
 import { getLookById } from '@/lib/database'
@@ -8,6 +8,13 @@ import { getLookById } from '@/lib/database'
 async function getLook(id: string): Promise<FashionLook | null> {
   try {
     console.log('Fetching look directly from database:', id)
+
+    // Check if database is properly configured
+    if (!process.env.DATABASE_POSTGRES_URL && !process.env.DATABASE_URL) {
+      console.error('Database not configured - missing environment variables')
+      return null
+    }
+
     const dbLook = await getLookById(id)
 
     if (!dbLook) {
@@ -34,6 +41,11 @@ async function getLook(id: string): Promise<FashionLook | null> {
     return look
   } catch (error) {
     console.error('Error fetching look from database:', error)
+    console.error('Database connection details:', {
+      hasPostgresUrl: !!process.env.DATABASE_POSTGRES_URL,
+      hasDbUrl: !!process.env.DATABASE_URL,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error'
+    })
     return null
   }
 }
@@ -123,6 +135,12 @@ function generateJsonLd(look: FashionLook) {
 
 export default async function LookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+
+  // Check if database is configured
+  if (!process.env.DATABASE_POSTGRES_URL && !process.env.DATABASE_URL) {
+    redirect('/database-error')
+  }
+
   const look = await getLook(id)
 
   if (!look) {

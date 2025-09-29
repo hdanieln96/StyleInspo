@@ -21,7 +21,8 @@ export async function GET() {
     const dbLooks = await getAllLooks()
 
     // Transform database format to frontend format
-    const looks: FashionLook[] = dbLooks.map((look: any) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const looks: FashionLook[] = dbLooks.map((look: Record<string, any>) => ({
       id: look.id,
       title: look.title,
       mainImage: look.main_image,

@@ -266,7 +266,7 @@ Keep the response focused and brief.`
         h2s: ['How to Style This Look', 'When to Wear', 'Shop the Items', 'Complete the Look'],
         outfitDescription: generateOutfitDescription(primaryColor, occasion, season, itemCount, styleAesthetic, detectedItems),
         stylingTips: generateStylingTips(primaryColor, occasion, season, styleAesthetic),
-        occasionGuide: generateOccasionGuide(occasion, styleAesthetic),
+        occasionGuide: generateOccasionGuide(occasion),
         itemDescriptions: {},
         keywords: generateKeywords(primaryColor, occasion, season, styleAesthetic, itemCount),
         imageAltText: `${primaryColor} ${occasion} outfit featuring ${itemCount} coordinated pieces in ${styleAesthetic} style`,
@@ -385,7 +385,7 @@ function generateStylingTips(color: string, occasion: string, season: string, st
   return [...baseTips.slice(0, 3), ...specificTips.slice(0, 2)]
 }
 
-function generateOccasionGuide(occasion: string, style: string): string {
+function generateOccasionGuide(occasion: string): string {
   // Ultra-minimal occasion guides (7-10 words)
   const guides = {
     professional: `Perfect for office meetings, presentations, business events.`,
