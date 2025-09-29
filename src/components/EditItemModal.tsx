@@ -115,7 +115,7 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
 
       // Update SEO data for this item
       const updatedSEO = {
-        ...look.seo,
+        ...(look.seo || {}),
         itemDescriptions: {
           ...look.seo?.itemDescriptions,
           [item.id]: data.description,

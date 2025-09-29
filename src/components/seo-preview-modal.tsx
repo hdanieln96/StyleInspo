@@ -84,7 +84,7 @@ export function SEOPreviewModal({ open, onOpenChange, look, onSave }: SEOPreview
 
     try {
       const updatedSEO: SEOData = {
-        ...look.seo,
+        ...(look.seo || {} as SEOData),
         pageTitle: data.pageTitle,
         metaDescription: data.metaDescription,
         urlSlug: data.urlSlug,
