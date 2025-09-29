@@ -122,6 +122,16 @@ export async function generateMetadata(
 
 // Generate JSON-LD schema markup
 function generateJsonLd(look: FashionLook) {
+  // Safely parse prices from items
+  const validPrices = look.items
+    .map(item => {
+      if (!item.price) return null
+      const cleanPrice = item.price.replace(/[^0-9.]/g, '')
+      const parsedPrice = parseFloat(cleanPrice)
+      return isNaN(parsedPrice) ? null : parsedPrice
+    })
+    .filter((price): price is number => price !== null && price > 0)
+
   return look.seo?.schemaMarkup || {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -131,8 +141,8 @@ function generateJsonLd(look: FashionLook) {
     "offers": {
       "@type": "AggregateOffer",
       "priceCurrency": "USD",
-      "lowPrice": look.items.length > 0 ? Math.min(...look.items.map(item => parseFloat(item.price.replace(/[^0-9.]/g, '')))) : 0,
-      "highPrice": look.items.length > 0 ? Math.max(...look.items.map(item => parseFloat(item.price.replace(/[^0-9.]/g, '')))) : 0
+      "lowPrice": validPrices.length > 0 ? Math.min(...validPrices) : 0,
+      "highPrice": validPrices.length > 0 ? Math.max(...validPrices) : 0
     }
   }
 }
