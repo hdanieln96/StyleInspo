@@ -9,8 +9,12 @@ async function getLook(id: string): Promise<FashionLook | null> {
   try {
     console.log('Fetching look directly from database:', id)
 
-    // Check if database is properly configured
-    if (!process.env.DATABASE_POSTGRES_URL && !process.env.DATABASE_URL) {
+    // Check if database is properly configured (check all Vercel/Neon variants)
+    const hasDatabase = process.env.DATABASE_POSTGRES_URL ||
+                       process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+                       process.env.DATABASE_URL
+
+    if (!hasDatabase) {
       console.error('Database not configured - missing environment variables')
       return null
     }
@@ -136,8 +140,12 @@ function generateJsonLd(look: FashionLook) {
 export default async function LookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // Check if database is configured
-  if (!process.env.DATABASE_POSTGRES_URL && !process.env.DATABASE_URL) {
+  // Check if database is configured (check all Vercel/Neon variants)
+  const hasDatabase = process.env.DATABASE_POSTGRES_URL ||
+                     process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+                     process.env.DATABASE_URL
+
+  if (!hasDatabase) {
     redirect('/database-error')
   }
 

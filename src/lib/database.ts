@@ -1,8 +1,16 @@
 import { neon } from '@neondatabase/serverless'
 
-// Database connection - use the Neon-created environment variable
-const databaseUrl = process.env.DATABASE_POSTGRES_URL || process.env.DATABASE_URL
-console.log('Database URL status:', databaseUrl ? 'Found DATABASE_POSTGRES_URL' : 'Missing both DATABASE_POSTGRES_URL and DATABASE_URL')
+// Database connection - use Vercel's auto-generated Neon environment variables
+const databaseUrl = process.env.DATABASE_POSTGRES_URL ||
+                   process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+                   process.env.DATABASE_URL
+
+console.log('Database URL status:', {
+  hasPostgresUrl: !!process.env.DATABASE_POSTGRES_URL,
+  hasNonPoolingUrl: !!process.env.DATABASE_POSTGRES_URL_NON_POOLING,
+  hasGenericUrl: !!process.env.DATABASE_URL,
+  selectedUrl: databaseUrl ? 'Connection string found' : 'No connection string'
+})
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let sql: any = null
