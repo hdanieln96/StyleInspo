@@ -140,31 +140,40 @@ function generateJsonLd(look: FashionLook) {
 export default async function LookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // Check if database is configured (check all Vercel/Neon variants)
-  const hasDatabase = process.env.DATABASE_POSTGRES_URL ||
-                     process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
-                     process.env.DATABASE_URL
+  try {
+    const look = await getLook(id)
 
-  if (!hasDatabase) {
-    redirect('/database-error')
-  }
+    if (!look) {
+      console.log('Look not found, redirecting to 404')
+      notFound()
+    }
 
-  const look = await getLook(id)
+    const jsonLd = generateJsonLd(look)
 
-  if (!look) {
+    return (
+      <>
+        {/* JSON-LD Schema Markup */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <LookDetailContent look={look} />
+      </>
+    )
+  } catch (error) {
+    console.error('Error in LookDetailPage:', error)
+
+    // Check if it's a database connection error
+    const hasDatabase = process.env.DATABASE_POSTGRES_URL ||
+                       process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+                       process.env.DATABASE_URL
+
+    if (!hasDatabase) {
+      console.log('Database not configured, redirecting to error page')
+      redirect('/database-error')
+    }
+
+    // For other errors, show 404
     notFound()
   }
-
-  const jsonLd = generateJsonLd(look)
-
-  return (
-    <>
-      {/* JSON-LD Schema Markup */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <LookDetailContent look={look} />
-    </>
-  )
 }
