@@ -5,11 +5,12 @@ const databaseUrl = process.env.DATABASE_POSTGRES_URL ||
                    process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
                    process.env.DATABASE_URL
 
-console.log('Database URL status:', {
+console.log('Database URL status (v2):', {
   hasPostgresUrl: !!process.env.DATABASE_POSTGRES_URL,
   hasNonPoolingUrl: !!process.env.DATABASE_POSTGRES_URL_NON_POOLING,
   hasGenericUrl: !!process.env.DATABASE_URL,
-  selectedUrl: databaseUrl ? 'Connection string found' : 'No connection string'
+  selectedUrl: databaseUrl ? 'Connection string found' : 'No connection string',
+  actualUrl: databaseUrl ? databaseUrl.substring(0, 20) + '...' : 'null'
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
