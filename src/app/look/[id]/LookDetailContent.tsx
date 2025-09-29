@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ArrowLeft, ExternalLink, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,11 +38,62 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const { isAdmin } = useAuth()
 
+  // Track affiliate click
+  const trackAffiliateClick = useCallback(async (item: FashionItem) => {
+    try {
+      await fetch('/api/analytics/affiliate-click', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lookId: look.id,
+          itemId: item.id,
+          itemName: item.name,
+          affiliateUrl: item.affiliateLink
+        })
+      })
+    } catch (error) {
+      console.error('Failed to track affiliate click:', error)
+    }
+  }, [look.id])
+
+  // Handle affiliate link click with tracking
+  const handleAffiliateClick = useCallback((item: FashionItem, e: React.MouseEvent) => {
+    // Track the click
+    trackAffiliateClick(item)
+
+    // Let the default link behavior continue (opening in new tab)
+    // The tracking will happen in background
+  }, [trackAffiliateClick])
+
   // Handle image loading errors
   const handleImageError = useCallback((imageUrl: string, type: 'main' | 'item') => {
     console.error(`${type} image failed to load:`, imageUrl)
     setImageErrors(prev => new Set(prev).add(imageUrl))
   }, [])
+
+  // Track page view when component mounts
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        await fetch('/api/analytics/page-view', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pagePath: `/look/${look.id}`,
+            lookId: look.id
+          })
+        })
+      } catch (error) {
+        console.error('Failed to track page view:', error)
+      }
+    }
+
+    trackView()
+  }, [look.id])
 
   const handleSaveLook = async (updatedLook: FashionLook) => {
     try {
@@ -322,6 +373,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                           rel="noopener noreferrer"
                           className="block relative"
                           aria-label={`Shop ${item.name} - ${item.price}`}
+                          onClick={(e) => handleAffiliateClick(item, e)}
                         >
                           <div
                             className="relative h-80 overflow-hidden"
@@ -389,6 +441,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                                 href={item.affiliateLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={(e) => handleAffiliateClick(item, e)}
                               >
                                 Shop Now
                               </a>

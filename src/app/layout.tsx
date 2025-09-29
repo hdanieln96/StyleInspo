@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,10 @@ export default function RootLayout({
           </main>
           <Footer />
         </Providers>
+        {/* Google Analytics - Only load if GA ID is provided */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );

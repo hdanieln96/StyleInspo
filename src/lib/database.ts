@@ -64,6 +64,32 @@ export async function initializeDatabase() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `
+
+    // Create analytics tables
+    await sql`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id SERIAL PRIMARY KEY,
+        page_path TEXT NOT NULL,
+        look_id TEXT,
+        user_agent TEXT,
+        ip_address TEXT,
+        referrer TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS affiliate_clicks (
+        id SERIAL PRIMARY KEY,
+        look_id TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        item_name TEXT,
+        affiliate_url TEXT NOT NULL,
+        user_agent TEXT,
+        ip_address TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
     console.log('Tables created/verified successfully')
 
     // Create indexes for better performance
@@ -81,6 +107,28 @@ export async function initializeDatabase() {
       CREATE INDEX IF NOT EXISTS idx_fashion_looks_occasion
       ON fashion_looks(occasion)
       WHERE occasion IS NOT NULL
+    `
+
+    // Analytics indexes
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_page_views_look_id
+      ON page_views(look_id)
+      WHERE look_id IS NOT NULL
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_page_views_created_at
+      ON page_views(created_at DESC)
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_look_id
+      ON affiliate_clicks(look_id)
+    `
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_created_at
+      ON affiliate_clicks(created_at DESC)
     `
     console.log('Database indexes created/verified successfully')
 
@@ -338,5 +386,144 @@ export async function resetToDefaultTheme() {
   } catch (error) {
     console.error('Error resetting to default theme:', error)
     throw error
+  }
+}
+
+// Analytics functions
+
+// Track page view
+export async function trackPageView(data: {
+  pagePath: string
+  lookId?: string
+  userAgent?: string
+  ipAddress?: string
+  referrer?: string
+}) {
+  if (!sql) {
+    console.warn('Cannot track page view - no database connection')
+    return null
+  }
+
+  try {
+    const [pageView] = await sql`
+      INSERT INTO page_views (
+        page_path, look_id, user_agent, ip_address, referrer
+      ) VALUES (
+        ${data.pagePath},
+        ${data.lookId || null},
+        ${data.userAgent || null},
+        ${data.ipAddress || null},
+        ${data.referrer || null}
+      )
+      RETURNING *
+    `
+    return pageView
+  } catch (error) {
+    console.error('Error tracking page view:', error)
+    return null
+  }
+}
+
+// Track affiliate click
+export async function trackAffiliateClick(data: {
+  lookId: string
+  itemId: string
+  itemName?: string
+  affiliateUrl: string
+  userAgent?: string
+  ipAddress?: string
+}) {
+  if (!sql) {
+    console.warn('Cannot track affiliate click - no database connection')
+    return null
+  }
+
+  try {
+    const [click] = await sql`
+      INSERT INTO affiliate_clicks (
+        look_id, item_id, item_name, affiliate_url, user_agent, ip_address
+      ) VALUES (
+        ${data.lookId},
+        ${data.itemId},
+        ${data.itemName || null},
+        ${data.affiliateUrl},
+        ${data.userAgent || null},
+        ${data.ipAddress || null}
+      )
+      RETURNING *
+    `
+    return click
+  } catch (error) {
+    console.error('Error tracking affiliate click:', error)
+    return null
+  }
+}
+
+// Get analytics summary
+export async function getAnalyticsSummary() {
+  if (!sql) {
+    console.warn('Cannot get analytics - no database connection')
+    return null
+  }
+
+  try {
+    // Most viewed looks
+    const topLooks = await sql`
+      SELECT
+        l.id,
+        l.title,
+        l.main_image,
+        COUNT(pv.id) as view_count
+      FROM fashion_looks l
+      LEFT JOIN page_views pv ON l.id = pv.look_id
+      GROUP BY l.id, l.title, l.main_image
+      ORDER BY view_count DESC
+      LIMIT 10
+    `
+
+    // Recent page views
+    const recentViews = await sql`
+      SELECT
+        pv.*,
+        l.title as look_title
+      FROM page_views pv
+      LEFT JOIN fashion_looks l ON pv.look_id = l.id
+      ORDER BY pv.created_at DESC
+      LIMIT 50
+    `
+
+    // Affiliate clicks summary
+    const clickSummary = await sql`
+      SELECT
+        look_id,
+        COUNT(*) as click_count,
+        COUNT(DISTINCT item_id) as unique_items
+      FROM affiliate_clicks
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY look_id
+      ORDER BY click_count DESC
+      LIMIT 10
+    `
+
+    // Daily stats for last 7 days
+    const dailyStats = await sql`
+      SELECT
+        DATE(created_at) as date,
+        COUNT(*) as views
+      FROM page_views
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `
+
+    return {
+      topLooks,
+      recentViews,
+      clickSummary,
+      dailyStats
+    }
+  } catch (error) {
+    console.error('Error getting analytics summary:', error)
+    return null
   }
 }
