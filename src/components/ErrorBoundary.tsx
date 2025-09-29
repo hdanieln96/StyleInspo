@@ -12,7 +12,7 @@ interface Props {
     page?: string
     lookId?: string
     lookTitle?: string
-    additionalData?: Record<string, any>
+    additionalData?: Record<string, string | number | boolean | null | undefined>
   }
 }
 
