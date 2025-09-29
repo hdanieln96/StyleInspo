@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { FashionLook } from '@/types'
 import { LookDetailContent } from './LookDetailContent'
 import { getLookById } from '@/lib/database'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Fetch look data directly from database
 async function getLook(id: string): Promise<FashionLook | null> {
@@ -167,7 +168,15 @@ export default async function LookDetailPage({ params }: { params: Promise<{ id:
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <LookDetailContent look={look} />
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            console.error('Look detail page error:', error)
+            console.error('Look data that caused error:', look)
+            console.error('Error info:', errorInfo)
+          }}
+        >
+          <LookDetailContent look={look} />
+        </ErrorBoundary>
       </>
     )
   } catch (error) {

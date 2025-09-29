@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { ArrowLeft, ExternalLink, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,11 +20,29 @@ interface LookDetailContentProps {
 }
 
 export function LookDetailContent({ look: initialLook }: LookDetailContentProps) {
+  // Debug logging
+  console.log('LookDetailContent rendering with look:', {
+    id: initialLook.id,
+    title: initialLook.title,
+    mainImage: initialLook.mainImage,
+    itemsCount: initialLook.items?.length || 0,
+    tagsCount: initialLook.tags?.length || 0,
+    hasSeo: !!initialLook.seo,
+    hasAiAnalysis: !!initialLook.aiAnalysis
+  })
+
   const [look, setLook] = useState<FashionLook>(initialLook)
   const [isMainEditOpen, setIsMainEditOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [isAddItemOpen, setIsAddItemOpen] = useState(false)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const { isAdmin } = useAuth()
+
+  // Handle image loading errors
+  const handleImageError = useCallback((imageUrl: string, type: 'main' | 'item') => {
+    console.error(`${type} image failed to load:`, imageUrl)
+    setImageErrors(prev => new Set(prev).add(imageUrl))
+  }, [])
 
   const handleSaveLook = async (updatedLook: FashionLook) => {
     try {
@@ -51,14 +69,63 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
     setEditingItem(itemId)
   }
 
+  // Helper function to ensure proper SEO structure
+  const ensureDefaultSeoFields = (look: FashionLook): FashionLook => {
+    const defaultSeo = {
+      pageTitle: look.seo?.pageTitle || `${look.title} - Fashion Affiliate`,
+      metaDescription: look.seo?.metaDescription || `Shop this ${look.title} look. ${look.items?.length || 0} items available from our affiliate partners.`,
+      urlSlug: look.seo?.urlSlug || look.id,
+      h1: look.seo?.h1 || look.title,
+      h2s: look.seo?.h2s || [],
+      outfitDescription: look.seo?.outfitDescription || '',
+      stylingTips: look.seo?.stylingTips || [],
+      occasionGuide: look.seo?.occasionGuide || '',
+      itemDescriptions: look.seo?.itemDescriptions || {},
+      keywords: look.seo?.keywords || {
+        primary: [],
+        secondary: [],
+        longTail: []
+      },
+      imageAltText: look.seo?.imageAltText || `${look.title} fashion outfit - shop the look`,
+      itemAltTexts: look.seo?.itemAltTexts || {},
+      schemaMarkup: look.seo?.schemaMarkup || {},
+      internalLinks: look.seo?.internalLinks || [],
+      contentSections: look.seo?.contentSections || []
+    }
+
+    return {
+      ...look,
+      seo: defaultSeo
+    }
+  }
+
   const handleAddItem = async (newItem: FashionItem) => {
     try {
+      console.log('Adding new item:', newItem)
+
       const updatedLook: FashionLook = {
         ...look,
         items: [...look.items, newItem]
       }
 
-      await handleSaveLook(updatedLook)
+      // Ensure proper SEO structure
+      const lookWithDefaults = ensureDefaultSeoFields(updatedLook)
+
+      // Add default alt text and description for the new item
+      if (lookWithDefaults.seo) {
+        lookWithDefaults.seo.itemAltTexts = {
+          ...lookWithDefaults.seo.itemAltTexts,
+          [newItem.id]: `${newItem.name} ${newItem.category} - buy now for ${newItem.price}`
+        }
+
+        lookWithDefaults.seo.itemDescriptions = {
+          ...lookWithDefaults.seo.itemDescriptions,
+          [newItem.id]: `Shop this ${newItem.name} in ${newItem.category} category for ${newItem.price}`
+        }
+      }
+
+      console.log('Saving updated look with defaults:', lookWithDefaults)
+      await handleSaveLook(lookWithDefaults)
       toast.success('Item added successfully')
     } catch (error) {
       console.error('Error adding item:', error)
@@ -85,18 +152,24 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
             <div className="lg:w-1/2">
               {/* Main Image */}
               <div className="flex justify-center mb-6">
-                <div className="group w-full max-w-md relative overflow-hidden rounded-xl shadow-lg">
-                  <img
-                    src={look.mainImage}
-                    alt={look.seo?.imageAltText || `${look.title} fashion outfit - shop the look`}
-                    className="w-full h-auto object-cover"
-                    onError={(e) => {
-                      console.error('Error loading main image:', look.mainImage, e)
-                      // Set a placeholder or fallback image
-                      e.currentTarget.style.display = 'none'
-                    }}
-                    loading="lazy"
-                  />
+                <div className="group w-full max-w-md relative overflow-hidden rounded-xl shadow-lg bg-gray-100">
+                  {!imageErrors.has(look.mainImage) ? (
+                    <img
+                      src={look.mainImage}
+                      alt={look.seo?.imageAltText || `${look.title} fashion outfit - shop the look`}
+                      className="w-full h-auto object-cover"
+                      onError={() => handleImageError(look.mainImage, 'main')}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-96 flex items-center justify-center bg-gray-100 text-gray-500">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">👗</div>
+                        <p className="text-sm">Image not available</p>
+                        <p className="text-xs text-gray-400 mt-1">Fashion look preview</p>
+                      </div>
+                    </div>
+                  )}
                   {isAdmin && (
                     <EditButton
                       onClick={() => setIsMainEditOpen(true)}
@@ -116,9 +189,9 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                     </h1>
 
                     {/* H2 Headings */}
-                    {look.seo?.h2s && look.seo.h2s.length > 0 && (
+                    {look.seo?.h2s && Array.isArray(look.seo.h2s) && look.seo.h2s.length > 0 && (
                       <div className="mb-4 space-y-3">
-                        {look.seo.h2s.map((h2, index) => (
+                        {look.seo.h2s.filter(h2 => h2 && typeof h2 === 'string').map((h2, index) => (
                           <h2 key={index} className="text-lg font-semibold text-center text-gray-800">
                             {h2}
                           </h2>
@@ -151,10 +224,16 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                   {/* AI Analysis Tags */}
                   {look.aiAnalysis && (
                     <div className="flex flex-wrap gap-2 mb-4 justify-center">
-                      <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.occasion}</Badge>
-                      <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.season}</Badge>
-                      <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.styleAesthetic}</Badge>
-                      {look.aiAnalysis.colors.map((color, index) => (
+                      {look.aiAnalysis.occasion && (
+                        <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.occasion}</Badge>
+                      )}
+                      {look.aiAnalysis.season && (
+                        <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.season}</Badge>
+                      )}
+                      {look.aiAnalysis.styleAesthetic && (
+                        <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">{look.aiAnalysis.styleAesthetic}</Badge>
+                      )}
+                      {look.aiAnalysis.colors && Array.isArray(look.aiAnalysis.colors) && look.aiAnalysis.colors.map((color, index) => (
                         <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-700">{color}</Badge>
                       ))}
                     </div>
@@ -164,14 +243,14 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                 )}
 
                 {/* Styling Tips */}
-                {look.seo?.stylingTips && look.seo.stylingTips.length > 0 && (
+                {look.seo?.stylingTips && Array.isArray(look.seo.stylingTips) && look.seo.stylingTips.length > 0 && (
                   <Card className="mb-6">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg">Styling Tips</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
-                        {look.seo.stylingTips.map((tip, index) => (
+                        {look.seo.stylingTips.filter(tip => tip && typeof tip === 'string').map((tip, index) => (
                           <li key={index} className="flex items-start gap-2">
                             <span className="text-blue-600 mt-1 text-xs">•</span>
                             <span className="text-xs">{tip}</span>
@@ -198,111 +277,150 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
 
             {/* Right Side - Items Section */}
             <div className="lg:w-1/2">
-              <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                {/* Add Item Button - Only show for admins */}
-                {isAdmin && (
-                  <div className="flex justify-end mb-4">
-                    <Button
-                      onClick={() => setIsAddItemOpen(true)}
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Item
-                    </Button>
-                  </div>
-                )}
+              {/* Add Item Button - Only show for admins */}
+              {isAdmin && (
+                <div className="flex justify-end mb-4">
+                  <Button
+                    onClick={() => setIsAddItemOpen(true)}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Item
+                  </Button>
+                </div>
+              )}
 
-                {look.items.length === 0 ? (
-                  <div className="text-center py-4">
-                    <div className="w-10 h-10 mx-auto bg-muted rounded-full flex items-center justify-center mb-2">
-                      <span className="text-base">🛍️</span>
-                    </div>
-                    <p className="text-muted-foreground mb-1 text-sm">Items coming soon</p>
-                    <p className="text-xs text-muted-foreground">We&apos;re preparing the shopping details for this look</p>
+              {look.items.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-10 h-10 mx-auto bg-muted rounded-full flex items-center justify-center mb-2">
+                    <span className="text-base">🛍️</span>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-w-4xl">
-                    {look.items.map((item) => (
+                  <p className="text-muted-foreground mb-1 text-sm">Items coming soon</p>
+                  <p className="text-xs text-muted-foreground">We&apos;re preparing the shopping details for this look</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {look.items.map((item) => {
+                    console.log('Rendering item:', {
+                      id: item.id,
+                      name: item.name,
+                      image: item.image,
+                      hasAffiliateLink: !!item.affiliateLink,
+                      hasSeoAltText: !!look.seo?.itemAltTexts?.[item.id],
+                      hasSeoDescription: !!look.seo?.itemDescriptions?.[item.id]
+                    })
+                    return (
                       <div
                         key={item.id}
-                        className="group relative overflow-hidden rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-                        style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
+                        className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white"
                       >
-                        <AspectRatio
-                          ratio={3/4}
-                          className="relative overflow-hidden rounded-lg"
-                          style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
+                        {/* Clickable Image Area */}
+                        <a
+                          href={item.affiliateLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block relative"
+                          aria-label={`Shop ${item.name} - ${item.price}`}
                         >
-                          <img
-                            src={item.image}
-                            alt={look.seo?.itemAltTexts?.[item.id] || `${item.name} ${item.category} - buy now for ${item.price}`}
-                            className="object-contain w-full h-full"
-                            onError={(e) => {
-                              console.error('Error loading item image:', item.image, e)
-                              // Set a placeholder or fallback image
-                              e.currentTarget.style.display = 'none'
-                            }}
-                            loading="lazy"
-                          />
+                          <div
+                            className="relative max-h-80 overflow-hidden"
+                            style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
+                          >
+                            {!imageErrors.has(item.image) ? (
+                              <img
+                                src={item.image}
+                                alt={look.seo?.itemAltTexts?.[item.id] || `${item.name} ${item.category} - buy now for ${item.price}`}
+                                className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                                onError={() => handleImageError(item.image, 'item')}
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-80 flex items-center justify-center bg-gray-50 text-gray-400">
+                                <div className="text-center">
+                                  <div className="text-3xl mb-2">🛍️</div>
+                                  <p className="text-sm">Image unavailable</p>
+                                </div>
+                              </div>
+                            )}
 
-                          {/* Edit Button - Top Left */}
-                          {isAdmin && (
-                            <EditButton
-                              onClick={() => handleEditItem(item.id)}
-                              className="top-2 left-2"
-                              aria-label={`Edit ${item.name}`}
-                            />
+                            {/* Edit Button - Top Left (Admin only) */}
+                            {isAdmin && (
+                              <EditButton
+                                onClick={(e) => {
+                                  e.preventDefault() // Prevent navigation
+                                  e.stopPropagation()
+                                  handleEditItem(item.id)
+                                }}
+                                className="top-2 left-2 z-10"
+                                aria-label={`Edit ${item.name}`}
+                              />
+                            )}
+
+                            {/* Secondary View Button - Top Right */}
+                            <Button
+                              asChild
+                              size="sm"
+                              className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-black hover:bg-white text-xs px-2 py-1 h-auto border border-gray-200 z-10"
+                              onClick={(e) => e.stopPropagation()} // Prevent double navigation
+                            >
+                              <span className="flex items-center">
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Shop
+                              </span>
+                            </Button>
+                          </div>
+                        </a>
+
+                        {/* Product Information Below Image */}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">
+                              {item.category}
+                            </Badge>
+                          </div>
+
+                          <h3 className="font-semibold text-base leading-tight mb-2 text-black">
+                            {item.name}
+                          </h3>
+
+                          {/* SEO-optimized item description */}
+                          {look.seo?.itemDescriptions?.[item.id] && (
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                              {look.seo.itemDescriptions[item.id]}
+                            </p>
                           )}
 
-                          {/* View Button - Top Right */}
-                          <Button
-                            asChild
-                            size="sm"
-                            className="absolute top-2 right-2 bg-white text-black hover:bg-gray-50 text-xs px-2 py-1 h-auto border border-gray-200"
-                          >
-                            <a
-                              href={item.affiliateLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          <div className="flex items-center justify-between">
+                            <p className="text-lg font-bold text-black">{item.price}</p>
+                            <Button
+                              asChild
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              View Item
-                            </a>
-                          </Button>
-
-                          {/* Item Info - Bottom */}
-                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/95">
-                            <div className="flex items-start justify-between mb-1">
-                              <Badge variant="outline" className="text-xs text-gray-600 border-gray-300">
-                                {item.category}
-                              </Badge>
-                            </div>
-                            <h3 className="font-semibold text-sm leading-tight mb-1 text-black">
-                              {item.name}
-                            </h3>
-                            {/* SEO-optimized item description */}
-                            {look.seo?.itemDescriptions?.[item.id] && (
-                              <p className="text-xs text-gray-600 mb-1 line-clamp-1">
-                                {look.seo.itemDescriptions[item.id]}
-                              </p>
-                            )}
-                            <p className="text-sm font-bold text-black">{item.price}</p>
+                              <a
+                                href={item.affiliateLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Shop Now
+                              </a>
+                            </Button>
                           </div>
-                        </AspectRatio>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           {/* SEO Content Sections - Below main layout */}
           <div className="mt-8">
-            {look.seo?.contentSections && look.seo.contentSections.length > 0 && (
+            {look.seo?.contentSections && Array.isArray(look.seo.contentSections) && look.seo.contentSections.length > 0 && (
               <div className="mt-6 space-y-4">
-                {look.seo.contentSections.map((section, index) => (
+                {look.seo.contentSections.filter(section => section && section.heading && section.content).map((section, index) => (
                   <Card key={index}>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base">{section.heading}</CardTitle>
@@ -318,14 +436,14 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
             )}
 
             {/* Internal Links */}
-            {look.seo?.internalLinks && look.seo.internalLinks.length > 0 && (
+            {look.seo?.internalLinks && Array.isArray(look.seo.internalLinks) && look.seo.internalLinks.length > 0 && (
               <Card className="mt-6">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Related Looks</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-1">
-                    {look.seo.internalLinks.map((link, index) => (
+                    {look.seo.internalLinks.filter(link => link && link.url && link.text).map((link, index) => (
                       <Link
                         key={index}
                         href={link.url}

@@ -27,12 +27,10 @@ import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { FashionItem, UploadedImage } from '@/types'
 
 const itemSchema = z.object({
-  name: z.string().optional(),
-  price: z.string().optional(),
-  affiliateLink: z.string().optional().refine((val) => !val || z.string().url().safeParse(val).success, {
-    message: 'Please enter a valid URL'
-  }),
-  category: z.string().optional()
+  name: z.string().min(1, 'Item name is required').max(100, 'Item name must be less than 100 characters'),
+  price: z.string().min(1, 'Price is required').max(20, 'Price must be less than 20 characters'),
+  affiliateLink: z.string().url('Please enter a valid URL').min(1, 'Affiliate link is required'),
+  category: z.string().min(1, 'Category is required').max(50, 'Category must be less than 50 characters')
 })
 
 type ItemFormData = z.infer<typeof itemSchema>
@@ -77,10 +75,17 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
   })
 
   // Handle URL input and validation
-  const handleUrlChange = (url: string) => {
+  const handleUrlChange = async (url: string) => {
     setImageUrl(url)
     if (url && isValidImageUrl(url)) {
-      setUrlPreview(url)
+      // Test if the image is actually accessible
+      try {
+        await testImageAccessibility(url)
+        setUrlPreview(url)
+      } catch (error) {
+        console.error('Image URL not accessible:', error)
+        setUrlPreview('')
+      }
     } else {
       setUrlPreview('')
     }
@@ -110,8 +115,38 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
     }
   }
 
+  // Test if image URL is actually accessible
+  const testImageAccessibility = (url: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+
+      img.onload = () => {
+        console.log('Image accessibility test passed:', url)
+        resolve()
+      }
+
+      img.onerror = () => {
+        console.error('Image accessibility test failed:', url)
+        reject(new Error('Image not accessible'))
+      }
+
+      // Set timeout to avoid hanging
+      setTimeout(() => {
+        reject(new Error('Image load timeout'))
+      }, 10000)
+
+      img.src = url
+    })
+  }
+
   const onSubmit = async (data: ItemFormData) => {
-    if (!uploadedImage && !urlPreview) return
+    console.log('Submitting item data:', data)
+
+    if (!uploadedImage && !urlPreview) {
+      console.error('No image provided')
+      alert('Please select an image or provide an image URL')
+      return
+    }
 
     setIsSubmitting(true)
 
@@ -119,6 +154,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
       let finalImageUrl = ''
 
       if (uploadMethod === 'file' && uploadedImage) {
+        console.log('Uploading file to Cloudinary...')
         // Upload image to Cloudinary
         const formData = new FormData()
         formData.append('file', uploadedImage.file)
@@ -129,32 +165,40 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
         })
 
         if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text()
+          console.error('Upload failed:', errorText)
           throw new Error('Failed to upload image')
         }
 
         const { url } = await uploadResponse.json()
         finalImageUrl = url
+        console.log('File uploaded successfully:', finalImageUrl)
       } else if (uploadMethod === 'url' && urlPreview) {
         // Use the provided URL directly
         finalImageUrl = imageUrl
+        console.log('Using provided URL:', finalImageUrl)
       } else {
         throw new Error('No valid image provided')
       }
 
+      // Ensure all required fields are present with validated data
       const newItem: FashionItem = {
         id: crypto.randomUUID(),
-        name: data.name || 'Untitled Item',
-        price: data.price || '',
-        affiliateLink: data.affiliateLink || '',
-        category: data.category || 'Other',
-        image: finalImageUrl
+        name: data.name.trim(),
+        price: data.price.trim(),
+        affiliateLink: data.affiliateLink.trim(),
+        category: data.category.trim(),
+        image: finalImageUrl,
+        backgroundColor: '#ffffff' // Default background color
       }
 
+      console.log('Creating new item:', newItem)
       onAddItem(newItem)
       handleClose()
     } catch (error) {
       console.error('Failed to add item:', error)
-      alert('Failed to add item. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Failed to add item: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
