@@ -324,14 +324,14 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                           aria-label={`Shop ${item.name} - ${item.price}`}
                         >
                           <div
-                            className="relative max-h-80 overflow-hidden"
+                            className="relative h-80 overflow-hidden"
                             style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
                           >
                             {!imageErrors.has(item.image) ? (
                               <img
                                 src={item.image}
                                 alt={look.seo?.itemAltTexts?.[item.id] || `${item.name} ${item.category} - buy now for ${item.price}`}
-                                className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                                className="w-full h-80 object-contain hover:scale-105 transition-transform duration-300"
                                 onError={() => handleImageError(item.image, 'item')}
                                 loading="lazy"
                               />
@@ -356,19 +356,6 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                                 aria-label={`Edit ${item.name}`}
                               />
                             )}
-
-                            {/* Secondary View Button - Top Right */}
-                            <Button
-                              asChild
-                              size="sm"
-                              className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-black hover:bg-white text-xs px-2 py-1 h-auto border border-gray-200 z-10"
-                              onClick={(e) => e.stopPropagation()} // Prevent double navigation
-                            >
-                              <span className="flex items-center">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Shop
-                              </span>
-                            </Button>
                           </div>
                         </a>
 
