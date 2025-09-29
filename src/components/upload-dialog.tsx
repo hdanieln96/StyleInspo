@@ -27,6 +27,9 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('file')
+  const [imageUrl, setImageUrl] = useState('')
+  const [urlPreview, setUrlPreview] = useState('')
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -53,26 +56,74 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
     maxFiles: 1
   })
 
+  // Handle URL input and validation
+  const handleUrlChange = (url: string) => {
+    setImageUrl(url)
+    if (url && isValidImageUrl(url)) {
+      setUrlPreview(url)
+      // Auto-generate title from URL if title is empty
+      if (!title.trim()) {
+        const urlTitle = url.split('/').pop()?.split('.')[0] || ''
+        const cleanTitle = urlTitle
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase())
+        setTitle(cleanTitle)
+      }
+    } else {
+      setUrlPreview('')
+    }
+  }
+
+  // Simple URL validation for images
+  const isValidImageUrl = (url: string): boolean => {
+    try {
+      new URL(url)
+      return /\.(jpg|jpeg|png|webp|gif)$/i.test(url) || url.includes('cloudinary.com')
+    } catch {
+      return false
+    }
+  }
+
+  // Reset form
+  const resetForm = () => {
+    setUploadedImage(null)
+    setTitle('')
+    setTags('')
+    setImageUrl('')
+    setUrlPreview('')
+    setUploadMethod('file')
+  }
+
   const handleUpload = async () => {
-    if (!uploadedImage || isUploading) return
+    if ((!uploadedImage && !urlPreview) || isUploading) return
 
     setIsUploading(true)
 
     try {
-      // Upload image to Cloudinary
-      const formData = new FormData()
-      formData.append('file', uploadedImage.file)
+      let finalImageUrl = ''
 
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
+      if (uploadMethod === 'file' && uploadedImage) {
+        // Upload image to Cloudinary
+        const formData = new FormData()
+        formData.append('file', uploadedImage.file)
 
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image')
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image')
+        }
+
+        const { url } = await uploadResponse.json()
+        finalImageUrl = url
+      } else if (uploadMethod === 'url' && urlPreview) {
+        // Use the provided URL directly
+        finalImageUrl = imageUrl
+      } else {
+        throw new Error('No valid image provided')
       }
-
-      const { url: imageUrl } = await uploadResponse.json()
 
       // Process tags - split by comma, trim, filter empty, and convert to lowercase
       const processedTags = tags
@@ -80,11 +131,11 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
         .map(tag => tag.trim().toLowerCase())
         .filter(tag => tag.length > 0)
 
-      // Create the new look with Cloudinary URL
+      // Create the new look with image URL
       const newLook: FashionLook = {
         id: crypto.randomUUID(),
         title: title.trim() || '',
-        mainImage: imageUrl,
+        mainImage: finalImageUrl,
         items: [],
         tags: processedTags,
         createdAt: new Date().toISOString()
@@ -105,9 +156,7 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
       onUpload(savedLook)
 
       // Reset form
-      setUploadedImage(null)
-      setTitle('')
-      setTags('')
+      resetForm()
     } catch (error) {
       console.error('Upload failed:', error)
       alert('Failed to upload look. Please try again.')
@@ -117,9 +166,7 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
   }
 
   const handleClose = () => {
-    setUploadedImage(null)
-    setTitle('')
-    setTags('')
+    resetForm()
     onOpenChange(false)
   }
 
@@ -134,46 +181,122 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
         </DialogHeader>
 
         <div className="grid gap-4">
-          {!uploadedImage ? (
-            <div
-              {...getRootProps()}
-              className={`
-                border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                ${isDragActive
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted-foreground/25 hover:border-primary hover:bg-primary/5'
-                }
-              `}
+          {/* Upload Method Selection */}
+          <div className="flex space-x-2 border rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => setUploadMethod('file')}
+              className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                uploadMethod === 'file'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
             >
-              <input {...getInputProps()} />
-              <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {isDragActive
-                  ? 'Drop the image here...'
-                  : 'Drag & drop an image here, or click to select'
-                }
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                PNG, JPG, JPEG up to 10MB
-              </p>
-            </div>
-          ) : (
-            <div className="relative">
-              <AspectRatio ratio={3/4} className="overflow-hidden rounded-lg">
-                <img
-                  src={uploadedImage.preview}
-                  alt="Uploaded fashion look"
-                  className="object-cover w-full h-full"
-                />
-              </AspectRatio>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={() => setUploadedImage(null)}
+              Upload File
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMethod('url')}
+              className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                uploadMethod === 'url'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              Use URL
+            </button>
+          </div>
+
+          {/* File Upload */}
+          {uploadMethod === 'file' && (
+            !uploadedImage ? (
+              <div
+                {...getRootProps()}
+                className={`
+                  border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+                  ${isDragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'border-muted-foreground/25 hover:border-primary hover:bg-primary/5'
+                  }
+                `}
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <input {...getInputProps()} />
+                <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {isDragActive
+                    ? 'Drop the image here...'
+                    : 'Drag & drop an image here, or click to select'
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  PNG, JPG, JPEG up to 10MB
+                </p>
+              </div>
+            ) : (
+              <div className="relative">
+                <AspectRatio ratio={3/4} className="overflow-hidden rounded-lg">
+                  <img
+                    src={uploadedImage.preview}
+                    alt="Uploaded fashion look"
+                    className="object-cover w-full h-full"
+                  />
+                </AspectRatio>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => setUploadedImage(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )
+          )}
+
+          {/* URL Input */}
+          {uploadMethod === 'url' && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  className="mt-1"
+                />
+                {imageUrl && !isValidImageUrl(imageUrl) && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Please enter a valid image URL (.jpg, .jpeg, .png, .webp, .gif)
+                  </p>
+                )}
+              </div>
+
+              {/* URL Preview */}
+              {urlPreview && (
+                <div className="relative">
+                  <AspectRatio ratio={3/4} className="overflow-hidden rounded-lg">
+                    <img
+                      src={urlPreview}
+                      alt="Image preview"
+                      className="object-cover w-full h-full"
+                      onError={() => setUrlPreview('')}
+                    />
+                  </AspectRatio>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      setImageUrl('')
+                      setUrlPreview('')
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -206,7 +329,7 @@ export function UploadDialog({ open, onOpenChange, onUpload }: UploadDialogProps
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={!uploadedImage || isUploading}
+              disabled={(!uploadedImage && !urlPreview) || isUploading}
               className="flex-1"
             >
               {isUploading ? 'Uploading...' : 'Upload Look'}

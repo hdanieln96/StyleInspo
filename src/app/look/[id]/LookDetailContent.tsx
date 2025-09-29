@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from 'react'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { FashionLook } from '@/types'
+import { FashionLook, FashionItem } from '@/types'
 import Link from 'next/link'
 import { EditButton } from '@/components/EditButton'
 import { EditMainLookModal } from '@/components/EditMainLookModal'
 import { EditItemModal } from '@/components/EditItemModal'
+import { ItemUploadDialog } from '@/components/item-upload-dialog'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 
@@ -22,6 +23,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
   const [look, setLook] = useState<FashionLook>(initialLook)
   const [isMainEditOpen, setIsMainEditOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<string | null>(null)
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false)
   const { isAdmin } = useAuth()
 
   const handleSaveLook = async (updatedLook: FashionLook) => {
@@ -47,6 +49,21 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
 
   const handleEditItem = (itemId: string) => {
     setEditingItem(itemId)
+  }
+
+  const handleAddItem = async (newItem: FashionItem) => {
+    try {
+      const updatedLook: FashionLook = {
+        ...look,
+        items: [...look.items, newItem]
+      }
+
+      await handleSaveLook(updatedLook)
+      toast.success('Item added successfully')
+    } catch (error) {
+      console.error('Error adding item:', error)
+      toast.error('Failed to add item')
+    }
   }
 
   const editingItemData = editingItem ? look.items.find(item => item.id === editingItem) : null
@@ -176,6 +193,19 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
             {/* Right Side - Items Section */}
             <div className="lg:w-1/2">
               <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                {/* Add Item Button - Only show for admins */}
+                {isAdmin && (
+                  <div className="flex justify-end mb-4">
+                    <Button
+                      onClick={() => setIsAddItemOpen(true)}
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Item
+                    </Button>
+                  </div>
+                )}
 
                 {look.items.length === 0 ? (
                   <div className="text-center py-4">
@@ -317,6 +347,12 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
           onSave={handleSaveLook}
         />
       )}
+
+      <ItemUploadDialog
+        open={isAddItemOpen}
+        onOpenChange={setIsAddItemOpen}
+        onAddItem={handleAddItem}
+      />
     </>
   )
 }

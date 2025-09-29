@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload } from "lucide-react"
+import { Upload, Trash2 } from "lucide-react"
 import { FashionItem, FashionLook } from "@/types"
 import { toast } from "sonner"
 
@@ -138,6 +138,46 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
     } catch (error) {
       console.error('Error saving item:', error)
       toast.error('Failed to save changes')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteItem = async () => {
+    if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+
+      // Remove the item from the look
+      const updatedItems = look.items.filter(i => i.id !== item.id)
+
+      // Remove SEO data for this item
+      const updatedItemDescriptions = { ...look.seo?.itemDescriptions }
+      const updatedItemAltTexts = { ...look.seo?.itemAltTexts }
+      delete updatedItemDescriptions[item.id]
+      delete updatedItemAltTexts[item.id]
+
+      const updatedSEO = {
+        ...(look.seo || {}),
+        itemDescriptions: updatedItemDescriptions,
+        itemAltTexts: updatedItemAltTexts,
+      }
+
+      const updatedLook: FashionLook = {
+        ...look,
+        items: updatedItems,
+        seo: updatedSEO,
+      }
+
+      await onSave(updatedLook)
+      toast.success('Item deleted successfully')
+      onClose()
+    } catch (error) {
+      console.error('Error deleting item:', error)
+      toast.error('Failed to delete item')
     } finally {
       setIsLoading(false)
     }
@@ -340,13 +380,25 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
               </CardContent>
             </Card>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                Cancel
+            <DialogFooter className="flex justify-between">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteItem}
+                disabled={isLoading}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Item
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
