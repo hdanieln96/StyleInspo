@@ -222,7 +222,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                     <p className="text-xs text-muted-foreground">We&apos;re preparing the shopping details for this look</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-w-4xl">
                     {look.items.map((item) => (
                       <div
                         key={item.id}
@@ -230,7 +230,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                         style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
                       >
                         <AspectRatio
-                          ratio={4/3}
+                          ratio={3/4}
                           className="relative overflow-hidden rounded-lg"
                           style={{ backgroundColor: item.backgroundColor || '#ffffff' }}
                         >

@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Trash2, X } from "lucide-react"
@@ -33,17 +32,6 @@ interface ItemFormData {
   backgroundColor: string
 }
 
-const CATEGORIES = [
-  'Tops',
-  'Bottoms',
-  'Dresses',
-  'Outerwear',
-  'Shoes',
-  'Accessories',
-  'Bags',
-  'Jewelry',
-  'Other'
-]
 
 export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemModalProps) {
   const [isLoading, setIsLoading] = useState(false)
@@ -414,20 +402,9 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {CATEGORIES.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Top, Dress, Shoes" />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

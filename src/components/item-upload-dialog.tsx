@@ -21,23 +21,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { FashionItem, UploadedImage } from '@/types'
 
 const itemSchema = z.object({
-  name: z.string().min(1, 'Item name is required'),
-  price: z.string().min(1, 'Price is required'),
-  affiliateLink: z.string().url('Please enter a valid URL'),
-  category: z.enum(['top', 'bottom', 'shoes', 'accessories', 'dress', 'outerwear'])
+  name: z.string().optional(),
+  price: z.string().optional(),
+  affiliateLink: z.string().optional().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: 'Please enter a valid URL'
+  }),
+  category: z.string().optional()
 })
 
 type ItemFormData = z.infer<typeof itemSchema>
@@ -61,7 +56,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
       name: '',
       price: '',
       affiliateLink: '',
-      category: 'top'
+      category: ''
     }
   })
 
@@ -148,10 +143,10 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
 
       const newItem: FashionItem = {
         id: crypto.randomUUID(),
-        name: data.name,
-        price: data.price,
-        affiliateLink: data.affiliateLink,
-        category: data.category,
+        name: data.name || 'Untitled Item',
+        price: data.price || '',
+        affiliateLink: data.affiliateLink || '',
+        category: data.category || 'Other',
         image: finalImageUrl
       }
 
@@ -324,21 +319,9 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="top">Top</SelectItem>
-                      <SelectItem value="bottom">Bottom</SelectItem>
-                      <SelectItem value="dress">Dress</SelectItem>
-                      <SelectItem value="outerwear">Outerwear</SelectItem>
-                      <SelectItem value="shoes">Shoes</SelectItem>
-                      <SelectItem value="accessories">Accessories</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g., Top, Dress, Shoes" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
