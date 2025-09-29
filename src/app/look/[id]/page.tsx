@@ -2,19 +2,38 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FashionLook } from '@/types'
 import { LookDetailContent } from './LookDetailContent'
+import { getLookById } from '@/lib/database'
 
-// Fetch look data
+// Fetch look data directly from database
 async function getLook(id: string): Promise<FashionLook | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/looks/${id}`, {
-      cache: 'no-store'
-    })
-    if (!response.ok) {
+    console.log('Fetching look directly from database:', id)
+    const dbLook = await getLookById(id)
+
+    if (!dbLook) {
+      console.log('Look not found in database:', id)
       return null
     }
-    return await response.json()
+
+    // Transform database format to frontend format
+    const look: FashionLook = {
+      id: dbLook.id,
+      title: dbLook.title,
+      mainImage: dbLook.main_image,
+      items: Array.isArray(dbLook.items) ? dbLook.items : [],
+      tags: Array.isArray(dbLook.tags) ? dbLook.tags : [],
+      createdAt: dbLook.created_at,
+      seo: dbLook.seo || undefined,
+      aiAnalysis: dbLook.ai_analysis || undefined,
+      occasion: dbLook.occasion || undefined,
+      season: dbLook.season || undefined,
+      seoLastUpdated: dbLook.seo_last_updated || undefined
+    }
+
+    console.log('Successfully fetched look from database:', look.title)
+    return look
   } catch (error) {
-    console.error('Error fetching look:', error)
+    console.error('Error fetching look from database:', error)
     return null
   }
 }
