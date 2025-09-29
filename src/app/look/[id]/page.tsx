@@ -169,10 +169,16 @@ export default async function LookDetailPage({ params }: { params: Promise<{ id:
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <ErrorBoundary
-          onError={(error, errorInfo) => {
-            console.error('Look detail page error:', error)
-            console.error('Look data that caused error:', look)
-            console.error('Error info:', errorInfo)
+          context={{
+            page: 'look-detail',
+            lookId: look.id,
+            lookTitle: look.title,
+            additionalData: {
+              itemsCount: look.items.length,
+              tagsCount: look.tags.length,
+              hasSeo: !!look.seo,
+              hasAiAnalysis: !!look.aiAnalysis
+            }
           }}
         >
           <LookDetailContent look={look} />

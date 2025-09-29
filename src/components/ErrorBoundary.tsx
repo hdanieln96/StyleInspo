@@ -8,7 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 interface Props {
   children: ReactNode
   fallback?: ReactNode
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
+  context?: {
+    page?: string
+    lookId?: string
+    lookTitle?: string
+    additionalData?: Record<string, any>
+  }
 }
 
 interface State {
@@ -34,19 +39,24 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('Error Info:', errorInfo)
     console.error('Component Stack:', errorInfo.componentStack)
 
+    // Log context if provided
+    if (this.props.context) {
+      console.error('Error Context:', {
+        page: this.props.context.page,
+        lookId: this.props.context.lookId,
+        lookTitle: this.props.context.lookTitle,
+        additionalData: this.props.context.additionalData
+      })
+    }
+
     // Update state with error info
     this.setState({
       error,
       errorInfo
     })
 
-    // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo)
-    }
-
-    // Log to external service (could be added later)
-    // this.logErrorToService(error, errorInfo)
+    // Log to external service (Sentry, LogRocket, etc.)
+    // this.logErrorToService(error, errorInfo, this.props.context)
   }
 
   handleReset = () => {
@@ -120,11 +130,11 @@ export class ErrorBoundary extends Component<Props, State> {
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: ReactNode,
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
+  context?: Props['context']
 ) {
   return function WrappedComponent(props: P) {
     return (
-      <ErrorBoundary fallback={fallback} onError={onError}>
+      <ErrorBoundary fallback={fallback} context={context}>
         <Component {...props} />
       </ErrorBoundary>
     )
