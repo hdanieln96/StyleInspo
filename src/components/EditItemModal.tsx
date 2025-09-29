@@ -69,7 +69,21 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
   const isValidImageUrl = (url: string): boolean => {
     try {
       new URL(url)
-      return /\.(jpg|jpeg|png|webp|gif)$/i.test(url) || url.includes('cloudinary.com')
+      // Check for common image file extensions or known image hosting services
+      return (
+        /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url) || // File extensions with optional query params
+        url.includes('cloudinary.com') ||
+        url.includes('imgur.com') ||
+        url.includes('unsplash.com') ||
+        url.includes('pexels.com') ||
+        url.includes('pixabay.com') ||
+        url.includes('amazonaws.com') ||
+        url.includes('googleusercontent.com') ||
+        url.includes('cdn.') ||
+        url.includes('/image') ||
+        url.includes('/img') ||
+        url.includes('/photo')
+      )
     } catch {
       return false
     }
