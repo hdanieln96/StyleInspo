@@ -90,6 +90,12 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                     src={look.mainImage}
                     alt={look.seo?.imageAltText || `${look.title} fashion outfit - shop the look`}
                     className="w-full h-auto object-cover"
+                    onError={(e) => {
+                      console.error('Error loading main image:', look.mainImage, e)
+                      // Set a placeholder or fallback image
+                      e.currentTarget.style.display = 'none'
+                    }}
+                    loading="lazy"
                   />
                   {isAdmin && (
                     <EditButton
@@ -232,6 +238,12 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                             src={item.image}
                             alt={look.seo?.itemAltTexts?.[item.id] || `${item.name} ${item.category} - buy now for ${item.price}`}
                             className="object-contain w-full h-full"
+                            onError={(e) => {
+                              console.error('Error loading item image:', item.image, e)
+                              // Set a placeholder or fallback image
+                              e.currentTarget.style.display = 'none'
+                            }}
+                            loading="lazy"
                           />
 
                           {/* Edit Button - Top Left */}

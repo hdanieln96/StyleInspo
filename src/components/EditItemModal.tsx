@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, Trash2 } from "lucide-react"
+import { Upload, Trash2, X } from "lucide-react"
 import { FashionItem, FashionLook } from "@/types"
 import { toast } from "sonner"
 
@@ -48,6 +48,9 @@ const CATEGORIES = [
 export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string>(item.image)
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('file')
+  const [imageUrl, setImageUrl] = useState('')
+  const [urlPreview, setUrlPreview] = useState('')
 
   const form = useForm<ItemFormData>({
     defaultValues: {
@@ -61,6 +64,42 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
       backgroundColor: item.backgroundColor || '#ffffff',
     }
   })
+
+  // Simple URL validation for images
+  const isValidImageUrl = (url: string): boolean => {
+    try {
+      new URL(url)
+      return /\.(jpg|jpeg|png|webp|gif)$/i.test(url) || url.includes('cloudinary.com')
+    } catch {
+      return false
+    }
+  }
+
+  // Handle URL input and validation
+  const handleUrlChange = (url: string) => {
+    setImageUrl(url)
+    if (url && isValidImageUrl(url)) {
+      setUrlPreview(url)
+      form.setValue('image', url)
+      setImagePreview(url)
+    } else {
+      setUrlPreview('')
+      if (!url) {
+        form.setValue('image', '')
+        setImagePreview('')
+      }
+    }
+  }
+
+  // Watch for changes to the image field to update preview
+  React.useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.image && value.image !== imagePreview) {
+        setImagePreview(value.image)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form, imagePreview])
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -198,43 +237,125 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
                 <CardTitle className="text-lg">Item Image</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="relative w-32 h-40 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
+                {/* Upload Method Selection */}
+                <div className="flex space-x-2 border rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('file')}
+                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                      uploadMethod === 'file'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    Upload File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('url')}
+                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                      uploadMethod === 'url'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    Use URL
+                  </button>
+                </div>
+
+                {/* File Upload */}
+                {uploadMethod === 'file' && (
+                  <div className="flex gap-4">
+                    <div className="relative w-32 h-40 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <Upload className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={isLoading}
                       />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <Upload className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <div className="flex-1 flex items-center">
+                      <p className="text-sm text-muted-foreground">
+                        Click the preview area to upload a new image file
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* URL Input */}
+                {uploadMethod === 'url' && (
+                  <div className="space-y-4">
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="image"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Image URL</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="url"
+                                placeholder="https://example.com/image.jpg"
+                                onChange={(e) => {
+                                  field.onChange(e)
+                                  handleUrlChange(e.target.value)
+                                }}
+                              />
+                            </FormControl>
+                            {field.value && !isValidImageUrl(field.value) && (
+                              <p className="text-sm text-red-500 mt-1">
+                                Please enter a valid image URL (.jpg, .jpeg, .png, .webp, .gif)
+                              </p>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* URL Preview */}
+                    {imagePreview && (
+                      <div className="relative w-32 h-40 border-2 border-gray-300 rounded-lg overflow-hidden">
+                        <img
+                          src={imagePreview}
+                          alt="Image preview"
+                          className="w-full h-full object-cover"
+                          onError={() => {
+                            setImagePreview('')
+                            form.setValue('image', '')
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 h-6 w-6 p-0"
+                          onClick={() => {
+                            setImageUrl('')
+                            setUrlPreview('')
+                            setImagePreview('')
+                            form.setValue('image', '')
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      disabled={isLoading}
-                    />
                   </div>
-                  <div className="flex-1">
-                    <FormField
-                      control={form.control}
-                      name="image"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Image URL</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Or paste image URL" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
