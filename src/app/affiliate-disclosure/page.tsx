@@ -156,7 +156,7 @@ export default function AffiliateDisclosurePage() {
               If you have any questions about our affiliate relationships or this disclosure, please don&apos;t hesitate to contact us:
             </p>
             <p className="mt-2">
-              Email: <a href="mailto:hello@styleinspo.com" className="text-blue-600 hover:underline">hello@styleinspo.com</a>
+              <Link href="/contact" className="text-blue-600 hover:underline">Contact us</Link> with any questions about our affiliate relationships.
             </p>
           </section>
 

@@ -165,7 +165,7 @@ export default function TermsOfServicePage() {
               If you have any questions about these Terms of Service, please contact us at:
             </p>
             <p className="mt-2">
-              Email: <a href="mailto:hello@styleinspo.com" className="text-blue-600 hover:underline">hello@styleinspo.com</a>
+              <Link href="/contact" className="text-blue-600 hover:underline">Contact us</Link> for any questions about these terms.
             </p>
           </section>
         </div>

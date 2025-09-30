@@ -1,14 +1,50 @@
-import { ArrowLeft, Mail, MessageSquare } from 'lucide-react'
+'use client'
+
+import { ArrowLeft, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-
-export const metadata = {
-  title: 'Contact Us - StyleInspo',
-  description: 'Get in touch with the StyleInspo team. We\'re here to help with questions, partnerships, and feedback.',
-}
+import { useState } from 'react'
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        setSubmitStatus('success')
+        setFormData({ name: '', email: '', subject: '', message: '' })
+      } else {
+        setSubmitStatus('error')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      setSubmitStatus('error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-background)' }}>
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -19,105 +55,116 @@ export default function ContactPage() {
           </Link>
         </Button>
 
-        <h1 className="text-4xl font-bold mb-8" style={{ color: 'var(--theme-text)' }}>
+        <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--theme-text)' }}>
           Contact Us
         </h1>
 
-        <div className="space-y-6">
-          <p className="text-lg" style={{ color: 'var(--theme-text-muted)' }}>
-            We&apos;d love to hear from you! Whether you have questions, feedback, or partnership inquiries, feel free to reach out.
-          </p>
+        <p className="text-lg mb-8" style={{ color: 'var(--theme-text-muted)' }}>
+          We&apos;d love to hear from you! Whether you have questions, feedback, or partnership inquiries, feel free to reach out.
+        </p>
 
-          <div className="grid md:grid-cols-2 gap-6 mt-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  General Inquiries
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  For general questions, feedback, or support:
-                </p>
-                <a
-                  href="mailto:hello@styleinspo.com"
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  hello@styleinspo.com
-                </a>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Send us a message</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Your name"
+                  />
+                </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Brand Partnerships
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Interested in partnering with us?
-                </p>
-                <a
-                  href="mailto:partnerships@styleinspo.com"
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  partnerships@styleinspo.com
-                </a>
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="your@email.com"
+                  />
+                </div>
+              </div>
 
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>What to Expect</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm" style={{ color: 'var(--theme-text-muted)' }}>
-                <li>• We typically respond within 24-48 hours during business days</li>
-                <li>• For partnership inquiries, please include details about your brand and proposal</li>
-                <li>• For technical issues, please describe the problem and include screenshots if possible</li>
-              </ul>
-            </CardContent>
-          </Card>
+              <div>
+                <Label htmlFor="subject">Subject *</Label>
+                <Input
+                  id="subject"
+                  type="text"
+                  required
+                  value={formData.subject}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="What is this about?"
+                />
+              </div>
 
-          <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: 'var(--theme-background-secondary)' }}>
-            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-text)' }}>
-              Follow Us
-            </h3>
-            <p className="text-sm mb-4" style={{ color: 'var(--theme-text-muted)' }}>
-              Stay updated with the latest fashion trends and style inspiration on our social media channels.
-            </p>
-            <div className="flex gap-4">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline text-sm"
+              <div>
+                <Label htmlFor="message">Message *</Label>
+                <Textarea
+                  id="message"
+                  required
+                  rows={6}
+                  value={formData.message}
+                  onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Tell us more..."
+                />
+              </div>
+
+              {submitStatus === 'success' && (
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-green-800 text-sm">
+                    Thank you for your message! We&apos;ll get back to you within 24-48 hours.
+                  </p>
+                </div>
+              )}
+
+              {submitStatus === 'error' && (
+                <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                  <p className="text-red-800 text-sm">
+                    Sorry, there was an error sending your message. Please try again or email us directly.
+                  </p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full md:w-auto"
               >
-                Instagram
-              </a>
-              <a
-                href="https://pinterest.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline text-sm"
-              >
-                Pinterest
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline text-sm"
-              >
-                TikTok
-              </a>
-            </div>
-          </div>
-        </div>
+                {isSubmitting ? (
+                  'Sending...'
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Message
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>What to Expect</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm" style={{ color: 'var(--theme-text-muted)' }}>
+              <li>• We typically respond within 24-48 hours during business days</li>
+              <li>• For partnership inquiries, please include details about your brand and proposal</li>
+              <li>• For technical issues, please describe the problem and include screenshots if possible</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

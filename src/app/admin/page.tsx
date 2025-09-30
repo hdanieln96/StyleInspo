@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Plus, LogOut, Eye, Edit, Trash2, Settings, Sparkles, BarChart3, MousePointer } from 'lucide-react'
+import { Plus, LogOut, Eye, Edit, Trash2, Settings, Sparkles, BarChart3, MousePointer, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -178,6 +178,14 @@ export default function AdminDashboard() {
             >
               <Settings className="h-4 w-4" />
               Style Settings
+            </Button>
+            <Button
+              onClick={() => router.push('/admin/pages')}
+              variant="outline"
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Edit Pages
             </Button>
             <Button
               onClick={handleSignOut}
@@ -365,11 +373,11 @@ export default function AdminDashboard() {
                       />
                     </AspectRatio>
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-sm leading-tight">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-semibold text-sm leading-tight truncate min-w-0 flex-1">
                           {look.title}
                         </h3>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"

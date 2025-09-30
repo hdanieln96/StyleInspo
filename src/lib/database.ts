@@ -90,6 +90,53 @@ export async function initializeDatabase() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `
+
+    // Create site_settings table for footer logo, colors, social links, etc.
+    await sql`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        id TEXT PRIMARY KEY DEFAULT 'default',
+        footer_logo_url TEXT,
+        footer_logo_size INTEGER DEFAULT 150,
+        footer_text_color TEXT DEFAULT '#9ca3af',
+        social_facebook TEXT,
+        social_twitter TEXT,
+        social_pinterest TEXT,
+        social_instagram TEXT,
+        social_tiktok TEXT,
+        admin_email TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
+
+    // Insert default settings if not exists
+    await sql`
+      INSERT INTO site_settings (id)
+      VALUES ('default')
+      ON CONFLICT (id) DO NOTHING
+    `
+
+    // Create pages table for editable page content
+    await sql`
+      CREATE TABLE IF NOT EXISTS pages (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
+
+    // Insert default pages
+    await sql`
+      INSERT INTO pages (id, title, content)
+      VALUES
+        ('about', 'About Us', ''),
+        ('contact', 'Contact', ''),
+        ('privacy', 'Privacy Policy', ''),
+        ('terms', 'Terms of Service', ''),
+        ('affiliate-disclosure', 'Affiliate Disclosure', '')
+      ON CONFLICT (id) DO NOTHING
+    `
+
     console.log('Tables created/verified successfully')
 
     // Create indexes for better performance

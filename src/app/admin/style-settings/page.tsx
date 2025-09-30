@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
-import { ArrowLeft, Palette, Type, Layout, Image as ImageIcon, RotateCcw, Save, Upload, X } from 'lucide-react'
+import { ArrowLeft, Palette, Type, Layout, Image as ImageIcon, RotateCcw, Save, Upload, X, Settings2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,7 @@ export default function StyleSettings() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { theme, updateTheme, resetTheme, isLoading } = useTheme()
-  const [activeTab, setActiveTab] = useState<'colors' | 'logo' | 'typography' | 'layout'>('colors')
+  const [activeTab, setActiveTab] = useState<'colors' | 'logo' | 'typography' | 'layout' | 'footer'>('colors')
   const [isSaving, setIsSaving] = useState(false)
   const [localColors, setLocalColors] = useState({
     primary: "#ec4899",
@@ -74,6 +74,22 @@ export default function StyleSettings() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
 
+  // Footer settings state
+  const [footerSettings, setFooterSettings] = useState({
+    footerLogoUrl: null as string | null,
+    footerLogoSize: 150,
+    footerTextColor: '#9ca3af',
+    socialFacebook: '',
+    socialTwitter: '',
+    socialPinterest: '',
+    socialInstagram: '',
+    socialTiktok: '',
+    adminEmail: ''
+  })
+  const [footerLogoFile, setFooterLogoFile] = useState<File | null>(null)
+  const [footerLogoPreview, setFooterLogoPreview] = useState<string | null>(null)
+  const [isUploadingFooterLogo, setIsUploadingFooterLogo] = useState(false)
+
   // Logo upload callback - must be defined before useDropzone
   const onLogoDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -81,6 +97,16 @@ export default function StyleSettings() {
       const preview = URL.createObjectURL(file)
       setLogoFile(file)
       setLogoPreview(preview)
+    }
+  }, [])
+
+  // Footer logo upload callback
+  const onFooterLogoDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (file) {
+      const preview = URL.createObjectURL(file)
+      setFooterLogoFile(file)
+      setFooterLogoPreview(preview)
     }
   }, [])
 
@@ -92,6 +118,40 @@ export default function StyleSettings() {
     },
     maxFiles: 1
   })
+
+  const { getRootProps: getFooterLogoRootProps, getInputProps: getFooterLogoInputProps, isDragActive: isFooterLogoDragActive } = useDropzone({
+    onDrop: onFooterLogoDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg']
+    },
+    maxFiles: 1
+  })
+
+  // Load footer settings from API
+  useEffect(() => {
+    const loadFooterSettings = async () => {
+      try {
+        const response = await fetch('/api/settings')
+        if (response.ok) {
+          const data = await response.json()
+          setFooterSettings({
+            footerLogoUrl: data.footer_logo_url,
+            footerLogoSize: data.footer_logo_size || 150,
+            footerTextColor: data.footer_text_color || '#9ca3af',
+            socialFacebook: data.social_facebook || '',
+            socialTwitter: data.social_twitter || '',
+            socialPinterest: data.social_pinterest || '',
+            socialInstagram: data.social_instagram || '',
+            socialTiktok: data.social_tiktok || '',
+            adminEmail: data.admin_email || ''
+          })
+        }
+      } catch (error) {
+        console.error('Error loading footer settings:', error)
+      }
+    }
+    loadFooterSettings()
+  }, [])
 
   // Update local state when theme loads
   useEffect(() => {
@@ -135,16 +195,35 @@ export default function StyleSettings() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
+      // Save theme settings
       await updateTheme({
         colors: localColors,
         typography: localTypography,
         layout: localLayout,
         logo: localLogo
       })
-      // Show success feedback here
+
+      // Save footer settings
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          footer_logo_url: footerSettings.footerLogoUrl,
+          footer_logo_size: footerSettings.footerLogoSize,
+          footer_text_color: footerSettings.footerTextColor,
+          social_facebook: footerSettings.socialFacebook,
+          social_twitter: footerSettings.socialTwitter,
+          social_pinterest: footerSettings.socialPinterest,
+          social_instagram: footerSettings.socialInstagram,
+          social_tiktok: footerSettings.socialTiktok,
+          admin_email: footerSettings.adminEmail
+        })
+      })
+
+      alert('Settings saved successfully!')
     } catch (error) {
-      console.error('Error saving theme:', error)
-      // Show error feedback here
+      console.error('Error saving settings:', error)
+      alert('Failed to save settings. Please try again.')
     } finally {
       setIsSaving(false)
     }
@@ -190,11 +269,45 @@ export default function StyleSettings() {
     setLogoPreview(null)
   }
 
+  const handleFooterLogoUpload = async (file: File) => {
+    setIsUploadingFooterLogo(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload footer logo')
+      }
+
+      const { url: logoUrl } = await uploadResponse.json()
+      setFooterSettings(prev => ({ ...prev, footerLogoUrl: logoUrl }))
+      setFooterLogoFile(null)
+      setFooterLogoPreview(null)
+    } catch (error) {
+      console.error('Footer logo upload failed:', error)
+      alert('Failed to upload footer logo. Please try again.')
+    } finally {
+      setIsUploadingFooterLogo(false)
+    }
+  }
+
+  const handleFooterLogoRemove = () => {
+    setFooterSettings(prev => ({ ...prev, footerLogoUrl: null }))
+    setFooterLogoFile(null)
+    setFooterLogoPreview(null)
+  }
+
   const tabs = [
     { id: 'colors' as const, label: 'Colors', icon: Palette },
-    { id: 'logo' as const, label: 'Logo', icon: ImageIcon },
+    { id: 'logo' as const, label: 'Header Logo', icon: ImageIcon },
     { id: 'typography' as const, label: 'Typography', icon: Type },
-    { id: 'layout' as const, label: 'Layout', icon: Layout }
+    { id: 'layout' as const, label: 'Layout', icon: Layout },
+    { id: 'footer' as const, label: 'Footer', icon: Settings2 }
   ]
 
   return (
@@ -857,6 +970,206 @@ export default function StyleSettings() {
                             <SelectItem value="right">Right</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'footer' && (
+                  <div className="space-y-6">
+                    {/* Footer Logo Upload */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Footer Logo</h3>
+
+                      {footerSettings.footerLogoUrl && !footerLogoPreview && (
+                        <div className="p-4 border rounded-lg mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-medium">Current Footer Logo</h4>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleFooterLogoRemove}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+                            <img
+                              src={footerSettings.footerLogoUrl}
+                              alt="Current footer logo"
+                              style={{ width: `${footerSettings.footerLogoSize}px` }}
+                              className="object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {footerLogoPreview ? (
+                        <div className="p-4 border rounded-lg mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-medium">Footer Logo Preview</h4>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setFooterLogoFile(null)
+                                  setFooterLogoPreview(null)
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Cancel
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => footerLogoFile && handleFooterLogoUpload(footerLogoFile)}
+                                disabled={isUploadingFooterLogo}
+                              >
+                                {isUploadingFooterLogo ? 'Uploading...' : 'Save Logo'}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+                            <img
+                              src={footerLogoPreview}
+                              alt="Footer logo preview"
+                              style={{ width: `${footerSettings.footerLogoSize}px` }}
+                              className="object-contain"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          {...getFooterLogoRootProps()}
+                          className={`
+                            text-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors mb-4
+                            ${isFooterLogoDragActive
+                              ? 'border-primary bg-primary/5'
+                              : 'border-muted-foreground/25 hover:border-primary hover:bg-primary/5'
+                            }
+                          `}
+                        >
+                          <input {...getFooterLogoInputProps()} />
+                          <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                          <h4 className="text-lg font-semibold mb-2">
+                            {footerSettings.footerLogoUrl ? 'Replace Footer Logo' : 'Upload Footer Logo'}
+                          </h4>
+                          <p className="text-muted-foreground mb-4">
+                            {isFooterLogoDragActive
+                              ? 'Drop the logo here...'
+                              : 'Drag & drop a logo, or click to select'
+                            }
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            PNG, JPG, JPEG, WebP, SVG up to 5MB
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="footerLogoSize">Footer Logo Size (px)</Label>
+                          <Input
+                            type="number"
+                            value={footerSettings.footerLogoSize}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, footerLogoSize: parseInt(e.target.value) || 150 }))}
+                            min="50"
+                            max="400"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="footerTextColor">Footer Text Color</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={footerSettings.footerTextColor}
+                              onChange={(e) => setFooterSettings(prev => ({ ...prev, footerTextColor: e.target.value }))}
+                              className="w-12 h-10 p-1 rounded border"
+                            />
+                            <Input
+                              type="text"
+                              value={footerSettings.footerTextColor}
+                              onChange={(e) => setFooterSettings(prev => ({ ...prev, footerTextColor: e.target.value }))}
+                              placeholder="#9ca3af"
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Social Media Links */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Social Media Links</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="socialFacebook">Facebook URL</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://facebook.com/yourpage"
+                            value={footerSettings.socialFacebook}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, socialFacebook: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="socialTwitter">Twitter/X URL</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://twitter.com/yourhandle"
+                            value={footerSettings.socialTwitter}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, socialTwitter: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="socialPinterest">Pinterest URL</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://pinterest.com/yourpage"
+                            value={footerSettings.socialPinterest}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, socialPinterest: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="socialInstagram">Instagram URL</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://instagram.com/yourhandle"
+                            value={footerSettings.socialInstagram}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, socialInstagram: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="socialTiktok">TikTok URL</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://tiktok.com/@yourhandle"
+                            value={footerSettings.socialTiktok}
+                            onChange={(e) => setFooterSettings(prev => ({ ...prev, socialTiktok: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Admin Email */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                      <div>
+                        <Label htmlFor="adminEmail">Admin Email (for contact form)</Label>
+                        <Input
+                          type="email"
+                          placeholder="admin@styleinspo.com"
+                          value={footerSettings.adminEmail}
+                          onChange={(e) => setFooterSettings(prev => ({ ...prev, adminEmail: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contact form submissions will be sent to this email address
+                        </p>
                       </div>
                     </div>
                   </div>
