@@ -28,7 +28,7 @@ import { FashionItem, UploadedImage } from '@/types'
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required').max(100, 'Item name must be less than 100 characters'),
-  price: z.string().min(1, 'Price is required').max(20, 'Price must be less than 20 characters'),
+  price: z.string().max(20, 'Price must be less than 20 characters').optional(),
   affiliateLink: z.string().url('Please enter a valid URL').min(1, 'Affiliate link is required'),
   category: z.string().max(50, 'Category must be less than 50 characters').optional()
 })
@@ -185,7 +185,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
       const newItem: FashionItem = {
         id: crypto.randomUUID(),
         name: data.name.trim(),
-        price: data.price.trim(),
+        price: data.price?.trim() || '',
         affiliateLink: data.affiliateLink.trim(),
         category: data.category?.trim() || 'Other',
         image: finalImageUrl,
@@ -376,7 +376,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price</FormLabel>
+                  <FormLabel>Price (Optional)</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., $59.99" {...field} />
                   </FormControl>
