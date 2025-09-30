@@ -3,7 +3,6 @@ import { neon } from '@neondatabase/serverless'
 import { Resend } from 'resend'
 
 const sql = neon(process.env.DATABASE_POSTGRES_URL || process.env.DATABASE_URL || '')
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   try {
@@ -52,6 +51,7 @@ export async function POST(request: Request) {
 
     // Send email via Resend
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
         from: 'StyleInspo Contact Form <onboarding@resend.dev>',
         to: adminEmail,
