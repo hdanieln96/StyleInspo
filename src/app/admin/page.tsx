@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Plus, LogOut, Eye, Edit, Trash2, Settings, Sparkles, BarChart3, MousePointer, FileText } from 'lucide-react'
+import { Plus, LogOut, Eye, Edit, Trash2, Settings, Sparkles, BarChart3, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

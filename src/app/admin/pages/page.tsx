@@ -201,7 +201,7 @@ export default function PageEditor() {
               <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;h2&gt;</code> for section headings</p>
               <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;p&gt;</code> for paragraphs</p>
               <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;ul&gt;</code> and <code className="bg-muted px-1 py-0.5 rounded">&lt;li&gt;</code> for lists</p>
-              <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;a href="..."&gt;</code> for links</p>
+              <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;a href=&quot;...&quot;&gt;</code> for links</p>
               <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;strong&gt;</code> for bold text</p>
               <p>• Use <code className="bg-muted px-1 py-0.5 rounded">&lt;em&gt;</code> for italic text</p>
             </div>
