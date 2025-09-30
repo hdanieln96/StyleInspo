@@ -86,7 +86,7 @@ export default function AffiliateDisclosurePage() {
               Your Trust Matters
             </h2>
             <p>
-              We take our relationship with you seriously. Here's our commitment to you:
+              We take our relationship with you seriously. Here&apos;s our commitment to you:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-4">
               <li><strong>Transparency:</strong> We clearly disclose our affiliate relationships</li>

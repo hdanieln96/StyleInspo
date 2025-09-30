@@ -2,8 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Heart, Settings, User } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Facebook, Twitter, Instagram } from 'lucide-react'
+import { FaPinterest, FaTiktok } from 'react-icons/fa'
 
 export function Footer() {
   const router = useRouter()
@@ -20,11 +22,6 @@ export function Footer() {
       { name: 'Terms of Service', href: '/terms' },
       { name: 'Affiliate Disclosure', href: '/affiliate-disclosure' },
     ],
-    social: [
-      { name: 'Instagram', href: 'https://instagram.com' },
-      { name: 'Pinterest', href: 'https://pinterest.com' },
-      { name: 'TikTok', href: 'https://tiktok.com' },
-    ]
   }
 
   return (
@@ -36,31 +33,72 @@ export function Footer() {
       }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Logo and Tagline Section */}
+        <div className="mb-8">
+          <h2
+            className="text-3xl font-serif font-bold mb-3"
+            style={{ color: 'var(--theme-text)', letterSpacing: '0.1em' }}
+          >
+            STYLEINSPO
+          </h2>
+          <p
+            className="text-sm max-w-2xl"
+            style={{ color: 'var(--theme-text-muted)' }}
+          >
+            The latest fashion looks, styling inspiration, and curated shopping.
+          </p>
+        </div>
+
+        {/* Social Media Icons */}
+        <div className="mb-12 flex gap-6">
+          <a
+            href="https://facebook.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-70"
+            aria-label="Facebook"
+          >
+            <Facebook className="h-5 w-5" style={{ color: 'var(--theme-text)' }} />
+          </a>
+          <a
+            href="https://twitter.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-70"
+            aria-label="Twitter/X"
+          >
+            <Twitter className="h-5 w-5" style={{ color: 'var(--theme-text)' }} />
+          </a>
+          <a
+            href="https://pinterest.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-70"
+            aria-label="Pinterest"
+          >
+            <FaPinterest className="h-5 w-5" style={{ color: 'var(--theme-text)' }} />
+          </a>
+          <a
+            href="https://instagram.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-70"
+            aria-label="Instagram"
+          >
+            <Instagram className="h-5 w-5" style={{ color: 'var(--theme-text)' }} />
+          </a>
+          <a
+            href="https://tiktok.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-70"
+            aria-label="TikTok"
+          >
+            <FaTiktok className="h-5 w-5" style={{ color: 'var(--theme-text)' }} />
+          </a>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand Section */}
-          <div className="md:col-span-1">
-            <p
-              className="text-sm mb-4"
-              style={{ color: 'var(--theme-text-muted)' }}
-            >
-              Discover stunning fashion looks and shop individual pieces through our curated affiliate partners.
-            </p>
-            <div className="flex items-center gap-1">
-              <span
-                className="text-sm"
-                style={{ color: 'var(--theme-text-muted)' }}
-              >
-                Made with
-              </span>
-              <Heart className="h-4 w-4 text-red-500 fill-current" />
-              <span
-                className="text-sm"
-                style={{ color: 'var(--theme-text-muted)' }}
-              >
-                for fashion lovers
-              </span>
-            </div>
-          </div>
 
           {/* Company Links */}
           <div>
@@ -103,31 +141,6 @@ export function Footer() {
                   >
                     {link.name}
                   </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Social Links */}
-          <div>
-            <h3
-              className="text-sm font-semibold mb-4 uppercase tracking-wider"
-              style={{ color: 'var(--theme-text)' }}
-            >
-              Follow Us
-            </h3>
-            <ul className="space-y-2">
-              {footerLinks.social.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm transition-colors hover:opacity-80"
-                    style={{ color: 'var(--theme-text-muted)' }}
-                  >
-                    {link.name}
-                  </a>
                 </li>
               ))}
             </ul>
