@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
               1. Introduction
             </h2>
             <p>
-              Welcome to StyleInspo ("we," "our," or "us"). We are committed to protecting your privacy and ensuring you have a positive experience on our website. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.
+              Welcome to StyleInspo (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;). We are committed to protecting your privacy and ensuring you have a positive experience on our website. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.
             </p>
           </section>
 
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-2xl font-semibold mb-4" style={{ color: 'var(--theme-text)' }}>
-              8. Children's Privacy
+              8. Children&apos;s Privacy
             </h2>
             <p>
               Our website is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.

@@ -32,7 +32,7 @@ export default function TermsOfServicePage() {
               1. Agreement to Terms
             </h2>
             <p>
-              By accessing or using StyleInspo ("the Website"), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this Website.
+              By accessing or using StyleInspo (&ldquo;the Website&rdquo;), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this Website.
             </p>
           </section>
 
@@ -41,14 +41,14 @@ export default function TermsOfServicePage() {
               2. Use License
             </h2>
             <p>
-              Permission is granted to temporarily access the materials (information or software) on StyleInspo's website for personal, non-commercial viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+              Permission is granted to temporarily access the materials (information or software) on StyleInspo&apos;s website for personal, non-commercial viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Modify or copy the materials</li>
               <li>Use the materials for any commercial purpose or public display</li>
               <li>Attempt to decompile or reverse engineer any software on the Website</li>
               <li>Remove any copyright or proprietary notations from the materials</li>
-              <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+              <li>Transfer the materials to another person or &ldquo;mirror&rdquo; the materials on any other server</li>
             </ul>
           </section>
 
@@ -72,7 +72,7 @@ export default function TermsOfServicePage() {
               4. Content Accuracy
             </h2>
             <p>
-              The materials appearing on StyleInspo's website may include technical, typographical, or photographic errors. StyleInspo does not warrant that any of the materials on its website are accurate, complete, or current. StyleInspo may make changes to the materials at any time without notice.
+              The materials appearing on StyleInspo&apos;s website may include technical, typographical, or photographic errors. StyleInspo does not warrant that any of the materials on its website are accurate, complete, or current. StyleInspo may make changes to the materials at any time without notice.
             </p>
           </section>
 
@@ -93,7 +93,7 @@ export default function TermsOfServicePage() {
               6. Disclaimer of Warranties
             </h2>
             <p>
-              The materials on StyleInspo's website are provided on an 'as is' basis. StyleInspo makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+              The materials on StyleInspo&apos;s website are provided on an &lsquo;as is&rsquo; basis. StyleInspo makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
             </p>
           </section>
 
@@ -102,7 +102,7 @@ export default function TermsOfServicePage() {
               7. Limitations of Liability
             </h2>
             <p>
-              In no event shall StyleInspo or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on StyleInspo's website, even if StyleInspo or an authorized representative has been notified orally or in writing of the possibility of such damage.
+              In no event shall StyleInspo or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on StyleInspo&apos;s website, even if StyleInspo or an authorized representative has been notified orally or in writing of the possibility of such damage.
             </p>
             <p className="mt-4">
               StyleInspo is not responsible for:
@@ -135,7 +135,7 @@ export default function TermsOfServicePage() {
               9. Links to Third-Party Sites
             </h2>
             <p>
-              StyleInspo has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by StyleInspo of the site. Use of any such linked website is at the user's own risk.
+              StyleInspo has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by StyleInspo of the site. Use of any such linked website is at the user&apos;s own risk.
             </p>
           </section>
 

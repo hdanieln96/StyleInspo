@@ -72,7 +72,7 @@ export default function AboutPage() {
               Contact Us
             </h2>
             <p className="text-lg leading-relaxed">
-              Have questions or feedback? We'd love to hear from you.{' '}
+              Have questions or feedback? We&apos;d love to hear from you.{' '}
               <Link href="/contact" className="text-blue-600 hover:underline">
                 Get in touch
               </Link>

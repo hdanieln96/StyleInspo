@@ -25,7 +25,7 @@ export default function ContactPage() {
 
         <div className="space-y-6">
           <p className="text-lg" style={{ color: 'var(--theme-text-muted)' }}>
-            We'd love to hear from you! Whether you have questions, feedback, or partnership inquiries, feel free to reach out.
+            We&apos;d love to hear from you! Whether you have questions, feedback, or partnership inquiries, feel free to reach out.
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 mt-8">

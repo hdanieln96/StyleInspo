@@ -32,7 +32,7 @@ export default function AffiliateDisclosurePage() {
               FTC Disclosure
             </h2>
             <p className="text-lg">
-              In accordance with the Federal Trade Commission's 16 CFR Part 255 ("Guides Concerning the Use of Endorsements and Testimonials in Advertising"), we are required to inform you that StyleInspo has financial relationships with some of the products and services mentioned on this website, and StyleInspo may be compensated if consumers choose to click these links and make a purchase.
+              In accordance with the Federal Trade Commission&apos;s 16 CFR Part 255 (&ldquo;Guides Concerning the Use of Endorsements and Testimonials in Advertising&rdquo;), we are required to inform you that StyleInspo has financial relationships with some of the products and services mentioned on this website, and StyleInspo may be compensated if consumers choose to click these links and make a purchase.
             </p>
           </section>
 
@@ -44,7 +44,7 @@ export default function AffiliateDisclosurePage() {
               Affiliate links are special tracking links that allow us to earn a commission when you click through our website and make a purchase from our partner retailers. These links contain unique identifiers that track the traffic we send to our partners.
             </p>
             <p className="mt-4">
-              <strong>Important:</strong> Using our affiliate links does not cost you anything extra. The price you pay is the same whether you use our link or go directly to the retailer's website. We simply earn a small commission from the retailer for referring you.
+              <strong>Important:</strong> Using our affiliate links does not cost you anything extra. The price you pay is the same whether you use our link or go directly to the retailer&apos;s website. We simply earn a small commission from the retailer for referring you.
             </p>
           </section>
 
@@ -132,7 +132,7 @@ export default function AffiliateDisclosurePage() {
               Cookies and Tracking
             </h2>
             <p>
-              Affiliate links use cookies to track your clicks and purchases. These cookies typically expire after 30-90 days, depending on the retailer's affiliate program. This means if you click our link and make a purchase within that timeframe, we may earn a commission.
+              Affiliate links use cookies to track your clicks and purchases. These cookies typically expire after 30-90 days, depending on the retailer&apos;s affiliate program. This means if you click our link and make a purchase within that timeframe, we may earn a commission.
             </p>
             <p className="mt-4">
               For more information about how we use cookies and tracking technologies, please see our <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>.
@@ -153,7 +153,7 @@ export default function AffiliateDisclosurePage() {
               Questions?
             </h2>
             <p>
-              If you have any questions about our affiliate relationships or this disclosure, please don't hesitate to contact us:
+              If you have any questions about our affiliate relationships or this disclosure, please don&apos;t hesitate to contact us:
             </p>
             <p className="mt-2">
               Email: <a href="mailto:hello@styleinspo.com" className="text-blue-600 hover:underline">hello@styleinspo.com</a>
