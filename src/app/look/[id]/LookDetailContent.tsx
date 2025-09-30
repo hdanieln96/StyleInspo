@@ -408,6 +408,23 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
                                 aria-label={`Edit ${item.name}`}
                               />
                             )}
+
+                            {/* Shop Button - Top Right */}
+                            <Button
+                              asChild
+                              size="sm"
+                              className="absolute top-2 right-2 bg-black hover:bg-gray-800 text-white text-xs px-3 py-1.5 h-auto z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <a
+                                href={item.affiliateLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => handleAffiliateClick(item, e)}
+                              >
+                                Shop
+                              </a>
+                            </Button>
                           </div>
                         </a>
 
@@ -432,20 +449,6 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
 
                           <div className="flex items-center justify-between">
                             <p className="text-lg font-bold text-black">{item.price}</p>
-                            <Button
-                              asChild
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              <a
-                                href={item.affiliateLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => handleAffiliateClick(item, e)}
-                              >
-                                Shop Now
-                              </a>
-                            </Button>
                           </div>
                         </div>
                       </div>
