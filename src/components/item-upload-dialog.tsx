@@ -30,7 +30,7 @@ const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required').max(100, 'Item name must be less than 100 characters'),
   price: z.string().min(1, 'Price is required').max(20, 'Price must be less than 20 characters'),
   affiliateLink: z.string().url('Please enter a valid URL').min(1, 'Affiliate link is required'),
-  category: z.string().min(1, 'Category is required').max(50, 'Category must be less than 50 characters')
+  category: z.string().max(50, 'Category must be less than 50 characters').optional()
 })
 
 type ItemFormData = z.infer<typeof itemSchema>
@@ -187,7 +187,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
         name: data.name.trim(),
         price: data.price.trim(),
         affiliateLink: data.affiliateLink.trim(),
-        category: data.category.trim(),
+        category: data.category?.trim() || 'Other',
         image: finalImageUrl,
         backgroundColor: '#ffffff' // Default background color
       }
@@ -362,7 +362,7 @@ export function ItemUploadDialog({ open, onOpenChange, onAddItem }: ItemUploadDi
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Category (Optional)</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="e.g., Top, Dress, Shoes" />
                   </FormControl>
