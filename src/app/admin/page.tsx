@@ -17,6 +17,13 @@ import { SEOPreviewModal } from '@/components/seo-preview-modal'
 import { useLooks } from '@/lib/hooks/use-looks'
 import { toast } from 'sonner'
 
+interface AnalyticsData {
+  recentViews?: Array<{ id: string; view_count: number }>
+  clickSummary?: Array<{ click_count: string }>
+  topLooks?: Array<{ id: string; title: string; view_count: number }>
+  dailyStats?: Array<{ date: string; views: number }>
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -25,7 +32,7 @@ export default function AdminDashboard() {
   const [editingLook, setEditingLook] = useState<FashionLook | null>(null)
   const [generatingSEO, setGeneratingSEO] = useState<string | null>(null)
   const [previewingSEO, setPreviewingSEO] = useState<FashionLook | null>(null)
-  const [analytics, setAnalytics] = useState<any>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
 
   useEffect(() => {
@@ -239,7 +246,7 @@ export default function AdminDashboard() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">Affiliate Clicks</CardTitle>
                     <div className="text-2xl font-bold">
-                      {analytics.clickSummary?.reduce((acc: number, item: any) => acc + parseInt(item.click_count), 0) || 0}
+                      {analytics.clickSummary?.reduce((acc: number, item: { click_count: string }) => acc + parseInt(item.click_count), 0) || 0}
                     </div>
                   </CardHeader>
                 </Card>
@@ -261,7 +268,7 @@ export default function AdminDashboard() {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Click Rate</CardTitle>
                     <div className="text-2xl font-bold">
                       {analytics.recentViews?.length > 0
-                        ? Math.round((analytics.clickSummary?.reduce((acc: number, item: any) => acc + parseInt(item.click_count), 0) / analytics.recentViews.length) * 100) || 0
+                        ? Math.round((analytics.clickSummary?.reduce((acc: number, item: { click_count: string }) => acc + parseInt(item.click_count), 0) / analytics.recentViews.length) * 100) || 0
                         : 0}%
                     </div>
                   </CardHeader>
@@ -276,7 +283,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {analytics.topLooks.slice(0, 5).map((look: any, index: number) => (
+                      {analytics.topLooks.slice(0, 5).map((look: { id: string; title: string; view_count: number }, index: number) => (
                         <div key={look.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
                           <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-sm font-medium">
                             {index + 1}
@@ -308,7 +315,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {analytics.dailyStats.map((day: any) => (
+                      {analytics.dailyStats.map((day: { date: string; views: number }) => (
                         <div key={day.date} className="flex justify-between items-center py-1">
                           <span className="text-sm">{new Date(day.date).toLocaleDateString()}</span>
                           <span className="font-medium">{day.views} views</span>
