@@ -14,7 +14,6 @@ export function Footer() {
     company: [
       { name: 'About', href: '/about' },
       { name: 'Contact', href: '/contact' },
-      { name: 'Careers', href: '/careers' },
     ],
     legal: [
       { name: 'Privacy Policy', href: '/privacy' },
@@ -149,7 +148,7 @@ export function Footer() {
                 className="text-xs"
                 style={{ color: 'var(--theme-text-muted)' }}
               >
-                Affiliate Disclosure: We may earn commissions from qualifying purchases.
+                Affiliate Disclosure: We may earn commissions from qualifying purchases. Partner: Awin
               </p>
             </div>
 
