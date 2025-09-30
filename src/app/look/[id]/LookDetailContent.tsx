@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useCallback, useEffect } from 'react'
-import { ArrowLeft, ExternalLink, Plus } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { FashionLook, FashionItem } from '@/types'
 import Link from 'next/link'
 import { EditButton } from '@/components/EditButton'
@@ -59,7 +58,7 @@ export function LookDetailContent({ look: initialLook }: LookDetailContentProps)
   }, [look.id])
 
   // Handle affiliate link click with tracking
-  const handleAffiliateClick = useCallback((item: FashionItem, e: React.MouseEvent) => {
+  const handleAffiliateClick = useCallback((item: FashionItem) => {
     // Track the click
     trackAffiliateClick(item)
 

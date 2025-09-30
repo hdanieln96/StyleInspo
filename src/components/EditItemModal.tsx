@@ -37,8 +37,6 @@ export function EditItemModal({ item, look, isOpen, onClose, onSave }: EditItemM
   const [isLoading, setIsLoading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string>(item.image)
   const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('file')
-  const [imageUrl, setImageUrl] = useState('')
-  const [urlPreview, setUrlPreview] = useState('')
 
   const form = useForm<ItemFormData>({
     defaultValues: {
