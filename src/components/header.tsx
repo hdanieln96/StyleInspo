@@ -3,12 +3,11 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Menu, X, Settings, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Menu, X } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 
 export function Header() {
-  const { data: session } = useSession()
+  const { data: _session } = useSession()
   const router = useRouter()
   const { theme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
