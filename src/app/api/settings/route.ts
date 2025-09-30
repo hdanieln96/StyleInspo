@@ -6,9 +6,23 @@ const sql = neon(process.env.DATABASE_POSTGRES_URL || process.env.DATABASE_URL |
 // GET site settings
 export async function GET() {
   try {
-    const [settings] = await sql`
+    let [settings] = await sql`
       SELECT * FROM site_settings WHERE id = 'default'
     `
+
+    // If no settings exist, create default row
+    if (!settings) {
+      console.log('No settings found, creating default row...')
+      const [newSettings] = await sql`
+        INSERT INTO site_settings (id)
+        VALUES ('default')
+        ON CONFLICT (id) DO NOTHING
+        RETURNING *
+      `
+      settings = newSettings
+    }
+
+    console.log('Fetched settings:', settings)
 
     return NextResponse.json(settings || {
       id: 'default',
@@ -35,6 +49,14 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
+    console.log('Updating settings with:', body)
+
+    // Ensure row exists first
+    await sql`
+      INSERT INTO site_settings (id)
+      VALUES ('default')
+      ON CONFLICT (id) DO NOTHING
+    `
 
     const [updatedSettings] = await sql`
       UPDATE site_settings
@@ -53,7 +75,8 @@ export async function PUT(request: Request) {
       RETURNING *
     `
 
-    return NextResponse.json(updatedSettings)
+    console.log('Settings updated successfully:', updatedSettings)
+    return NextResponse.json({ success: true, data: updatedSettings })
   } catch (error) {
     console.error('Error updating settings:', error)
     return NextResponse.json(

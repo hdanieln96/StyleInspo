@@ -204,7 +204,7 @@ export default function StyleSettings() {
       })
 
       // Save footer settings
-      await fetch('/api/settings', {
+      const settingsResponse = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,10 +220,17 @@ export default function StyleSettings() {
         })
       })
 
-      alert('Settings saved successfully!')
+      if (!settingsResponse.ok) {
+        throw new Error('Failed to save footer settings')
+      }
+
+      const result = await settingsResponse.json()
+      console.log('Settings saved:', result)
+
+      alert('Settings saved successfully! Please refresh the page to see the changes in the footer.')
     } catch (error) {
       console.error('Error saving settings:', error)
-      alert('Failed to save settings. Please try again.')
+      alert('Failed to save settings. Please check the console for details and try again.')
     } finally {
       setIsSaving(false)
     }
@@ -1103,6 +1110,9 @@ export default function StyleSettings() {
                     {/* Social Media Links */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Social Media Links</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Social media icons will only appear in the footer when you add URLs below. Leave blank to hide icons.
+                      </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="socialFacebook">Facebook URL</Label>

@@ -154,7 +154,7 @@ export function Footer() {
           )}
         </div>
 
-        <div className="flex justify-end gap-16">
+        <div className="flex justify-center gap-24 md:gap-32">
           {/* Company Links */}
           <div>
             <h3
@@ -168,7 +168,7 @@ export function Footer() {
                 <li key={link.name}>
                   <button
                     onClick={() => router.push(link.href)}
-                    className="text-sm transition-colors hover:opacity-80"
+                    className="text-sm transition-colors hover:opacity-80 text-left"
                     style={{ color: settings.footer_text_color }}
                   >
                     {link.name}
@@ -191,7 +191,7 @@ export function Footer() {
                 <li key={link.name}>
                   <button
                     onClick={() => router.push(link.href)}
-                    className="text-sm transition-colors hover:opacity-80"
+                    className="text-sm transition-colors hover:opacity-80 text-left"
                     style={{ color: settings.footer_text_color }}
                   >
                     {link.name}
