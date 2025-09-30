@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { FashionLook, FashionItem } from '@/types'
 
 const itemSchema = z.object({
